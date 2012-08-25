@@ -186,23 +186,28 @@ namespace Teamspeak.Main
 
             /* Possible Sample Output.
              * [Connect]         Connecting to the server.
+             * [QuerySent]       Command=login
+             * [MessageReceived] Command=login, Id=0, Msg=ok
+             * [QuerySent]       Command=use
+             * [MessageReceived] Command=use, Id=0, Msg=ok
+             * [QuerySent]       Command=version
+             * [MessageReceived] Command=version, Id=0, Msg=ok
              * [Commands]        Asynchronously sending some commands.
              * [Version]         Retreiving the version of the server.
-             * [QuerySent]       Command=login
-             * [QuerySent]       Command=use
              * [QuerySent]       Command=banlist
-             * [QuerySent]       Command=clientlist
-             * [QuerySent]       Command=channellist
-             * [QuerySent]       Command=whoami
-             * [QuerySent]       Command=version
-             * [MessageReceived] Command=login, Id=0, Msg=ok
-             * [MessageReceived] Command=use, Id=0, Msg=ok
              * [MessageReceived] Command=banlist, Id=1281, Msg=database empty result set
+             * [QuerySent]       Command=clientlist
              * [MessageReceived] Command=clientlist, Id=0, Msg=ok
+             * [QuerySent]       Command=channellist
              * [MessageReceived] Command=channellist, Id=0, Msg=ok
-             * [MessageReceived] Command=whoami, Id=0, Msg=ok
+             * [QuerySent]       Command=version
              * [MessageReceived] Command=version, Id=0, Msg=ok
              * [Version]         Version=3.0.6.1, Build=1340956745, Platform=Windows
+             * 
+             * Press Any Key to Continue
+             * 
+             * [QuerySent]       Command=servernotifyregister
+             * [MessageReceived] Command=servernotifyregister, Id=0, Msg=ok
              * 
              * Press Any Key to Continue
              * 
@@ -210,7 +215,7 @@ namespace Teamspeak.Main
              * [QuerySent]       Command=clientfind
              * [MessageReceived] Command=clientfind, Id=0, Msg=ok
              * [FindClient]      Found 1 clients who matched the pattern.
-             * [FindClient]      Client: Name=Imisnew2, Id=6.
+             * [FindClient]      Client: Name=Imisnew2, Id=3.
              * 
              * Press Any Key to Continue
              * 
@@ -218,14 +223,14 @@ namespace Teamspeak.Main
              * [QuerySent]       Command=serverlist
              * [MessageReceived] Command=serverlist, Id=0, Msg=ok
              * [ServerList]      Found 1 virtual servers.
-             * [ServerList]      Channel: Name=TeamSpeak ]I[ Server, Clients Online=1.
+             * [ServerList]      Channel: Name=TeamSpeak ]I[ Server, Clients Online=2.
              * 
              * Press Any Key to Continue
              * 
              * [Disconnect]      Closing the connection.
              * [QuerySent]       Command=logout
-             * [QuerySent]       Command=quit
              * [MessageReceived] Command=logout, Id=0, Msg=ok
+             * [QuerySent]       Command=quit
              * [MessageReceived] Command=quit, Id=0, Msg=ok
              * 
              * Press Any Key to Close
