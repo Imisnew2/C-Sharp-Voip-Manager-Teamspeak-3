@@ -17,6 +17,7 @@
  * ************************************************************************** */
 using System;
 using System.Linq;
+using System.Net.Sockets;
 using Teamspeak.ServerQuery;
 using Teamspeak.ServerQuery.Data;
 using Teamspeak.ServerQuery.Objects;
@@ -29,24 +30,19 @@ namespace Teamspeak.Main
         static void Main(String[] args)
         {
             // ---------------------------- Setup -----------------------------
-            // By calling "SetServerInfo", "SetLoginInfo", and "SetUseInfo", we
-            // ask the manager to control the connection, logging in, and
-            // virtual server selection. Only "SetServerInfo" must be called for
-            // the manager to work properly.
+            // We pass in the hostname/ip and port when creating the Teamspeak
+            // Connection object. An exception is thrown if the hostname could
+            // not be resolved.
             TeamspeakMessage    tMessage    = null;
-            TeamspeakConnection tConnection = new TeamspeakConnection();
+            TeamspeakConnection tConnection = null;
+            try {
+                tConnection = new TeamspeakConnection("localhost", 10011);
+            }
+            catch (SocketException) {
+                // Oh no! Hostname could not be resolved.
+                System.Environment.Exit(2);
+            }
 
-            tConnection.SetServerInfo("localhost");
-            // --- The above is equivalent to manually doing the next line. ---
-            // tManager.SetServerInfo("192.168.0.1", 10011);
-
-            tConnection.SetLoginInfo("serveradmin", "xs6TAoNX");
-            // --- The above is equivalent to manually doing the next line. ---
-            // tManager.Send(TeamspeakQuery.BuildLogin("username", "password"));
-
-            tConnection.SetUseInfo(TeamspeakQuery.UseType.Port, 9987);
-            // --- The above is equivalent to manually doing the next line. ---
-            // tManager.Send(TeamspeakQuery.BuildUsePort(9987));
 
 
             // ---------------------------- Events ----------------------------
@@ -81,8 +77,9 @@ namespace Teamspeak.Main
             // --- Connecting asynchronously. ---
             Console.WriteLine("[Connect]         Connecting to the server.");
             TeamspeakConnection.Async.Connect(tConnection);
-            tMessage = TeamspeakConnection.Sync.Send(tConnection, TeamspeakQuery.BuildVersion());
-
+            TeamspeakConnection.Async.Send(tConnection, TeamspeakQuery.BuildLogin("serveradmin", "zjThAVrP"));
+            TeamspeakConnection.Async.Send(tConnection, TeamspeakQuery.BuildUsePort(9987));
+            
             // --- Sending off some commands that aren't needed right away. ---
             Console.WriteLine("[Commands]        Asynchronously sending some commands.");
             TeamspeakConnection.Async.Send(tConnection, TeamspeakQuery.BuildBanList());
@@ -113,6 +110,8 @@ namespace Teamspeak.Main
             TeamspeakConnection.Sync.Send(tConnection, tQuery);
             Console.WriteLine("\nPress Any Key to Continue\n");
             Console.ReadKey(true);
+
+
 
             // ---------------------- Response Handling -----------------------
             // Teamspeak 3 server responses can be logically separated into 3
@@ -169,6 +168,7 @@ namespace Teamspeak.Main
             Console.ReadKey(true);
 
 
+
             // -------------------- Closing the Connection --------------------
             // When closing the connection, we don't need to logout and quit
             // manually. The TeamspeakConnection will automatically handle this
@@ -176,7 +176,9 @@ namespace Teamspeak.Main
             // the connection. Also, it is possible to immediately reopen the
             // connection if necessary.
             Console.WriteLine("[Disconnect]      Closing the connection.");
+            TeamspeakConnection.Sync.Send(tConnection, TeamspeakQuery.BuildLogout());
             TeamspeakConnection.Sync.Disconnect(tConnection);
+
 
 
             // --- Done! ---
@@ -186,14 +188,12 @@ namespace Teamspeak.Main
 
             /* Possible Sample Output.
              * [Connect]         Connecting to the server.
+             * [Commands]        Asynchronously sending some commands.
+             * [Version]         Retreiving the version of the server.
              * [QuerySent]       Command=login
              * [MessageReceived] Command=login, Id=0, Msg=ok
              * [QuerySent]       Command=use
              * [MessageReceived] Command=use, Id=0, Msg=ok
-             * [QuerySent]       Command=version
-             * [MessageReceived] Command=version, Id=0, Msg=ok
-             * [Commands]        Asynchronously sending some commands.
-             * [Version]         Retreiving the version of the server.
              * [QuerySent]       Command=banlist
              * [MessageReceived] Command=banlist, Id=1281, Msg=database empty result set
              * [QuerySent]       Command=clientlist
@@ -215,7 +215,7 @@ namespace Teamspeak.Main
              * [QuerySent]       Command=clientfind
              * [MessageReceived] Command=clientfind, Id=0, Msg=ok
              * [FindClient]      Found 1 clients who matched the pattern.
-             * [FindClient]      Client: Name=Imisnew2, Id=3.
+             * [FindClient]      Client: Name=Imisnew2, Id=1.
              * 
              * Press Any Key to Continue
              * 

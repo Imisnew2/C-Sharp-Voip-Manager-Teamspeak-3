@@ -55,7 +55,6 @@
     <Compile Include="Objects\TeamspeakServer.cs" />
     <Compile Include="TeamspeakConnection.cs" />
     <Compile Include="Data\TeamspeakQuery.cs" />
-    <Compile Include="Utils\BlockingQueue.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
