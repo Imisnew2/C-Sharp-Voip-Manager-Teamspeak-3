@@ -29,19 +29,10 @@ namespace VoipManager
         public Int32   ConnectTimeout   { get; set; }
         public Boolean ParallelRequests { get; set; }
 
-        // Used in Teamspeak3VoipManager.
-        //public Int32? RefreshClientListInterval  { get; set; }
-        //public Int32? RefreshChannelListInterval { get; set; }
-        //public Int32? RefreshBanListInterval     { get; set; }
-
         public Teamspeak3Settings()
         {
             ParallelRequests = false;
             ConnectTimeout   = 10000;
-
-            //RefreshClientListInterval  = null;
-            //RefreshChannelListInterval = null;
-            //RefreshBanListInterval     = null;
         }
     }
 }

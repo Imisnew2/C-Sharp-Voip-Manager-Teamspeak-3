@@ -44,7 +44,8 @@ namespace VoipManager.Connections
             public Task ready { get; set; }
         }
 
-        private Teamspeak3Settings mSettings;
+        private Int32   mConnectTimeout;
+        private Boolean mParallelRequests;
 
         private Boolean mIsDisposed;
         private BlockingCollection<Teamspeak3Task> mTasks;
@@ -55,7 +56,8 @@ namespace VoipManager.Connections
 
         public Teamspeak3Connection(Teamspeak3Settings settings)
         {
-            mSettings = settings;
+            mConnectTimeout   = settings.ConnectTimeout;
+            mParallelRequests = settings.ParallelRequests;
 
             mIsDisposed = false;
             mTasks      = new BlockingCollection<Teamspeak3Task>(new ConcurrentQueue<Teamspeak3Task>());
@@ -195,7 +197,7 @@ namespace VoipManager.Connections
         protected override Boolean ConnectCompleted()
         {
             // Wait 'x' seconds before disconnecting because we failed to receive the header greeting/message.
-            DateTime tTimeout = DateTime.Now.AddMilliseconds(mSettings.ConnectTimeout);
+            DateTime tTimeout = DateTime.Now.AddMilliseconds(mConnectTimeout);
             return mGrtHdrRecved.Wait(tTimeout - DateTime.Now) && mGrtMsgRecved.Wait(tTimeout - DateTime.Now);
         }
 
@@ -249,8 +251,8 @@ namespace VoipManager.Connections
 
             Task task  = new Task<Teamspeak3Response>(() => InternalSend(request, added));
             Task ready = new Task(() => {
-                if (mSettings.ParallelRequests) added.Wait();
-                else                            task.Wait();
+                if (mParallelRequests) added.Wait();
+                else                   task.Wait();
             });
 
             mTasks.Add(new Teamspeak3Task() {

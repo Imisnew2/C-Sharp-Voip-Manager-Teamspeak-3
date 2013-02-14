@@ -152,8 +152,6 @@ namespace VoipManager.Teamspeak3.Objects
             public Int32?   ServerGroupId;
             public Int32?   IdleTime;
             public Int32?   ConnectionTime;
-            public Int32?   CreationTime;
-            public Int32?   LastConnected;
             public Int32?   TotalConnections;
             public Int32?   TalkPower;
             public Int32?   NeededQueryViewPower;
@@ -172,6 +170,8 @@ namespace VoipManager.Teamspeak3.Objects
             public Int32?   BandwidthReceivedLastSecond;
             public Int32?   BandwidthSentLastMinute;
             public Int32?   BandwidthReceivedLastMinute;
+            public UInt32?  CreationTime;
+            public UInt32?  LastConnected;
             public Boolean? IsChannelCommander;
             public Boolean? InputMuted;
             public Boolean? OutputMuted;
@@ -188,6 +188,7 @@ namespace VoipManager.Teamspeak3.Objects
             {
                 String  sValue;
                 Int32   iValue;
+                UInt32  uiValue;
 
                 if (reset) {
                     LoginName                          = null;
@@ -209,8 +210,6 @@ namespace VoipManager.Teamspeak3.Objects
                     ChannelGroupId                     = null;
                     ServerGroupId                      = null;
                     IdleTime                           = null;
-                    ConnectionTime                     = null;
-                    CreationTime                       = null;
                     LastConnected                      = null;
                     TotalConnections                   = null;
                     TalkPower                          = null;
@@ -230,6 +229,8 @@ namespace VoipManager.Teamspeak3.Objects
                     BandwidthReceivedLastSecond        = null;
                     BandwidthSentLastMinute            = null;
                     BandwidthReceivedLastMinute        = null;
+                    ConnectionTime                     = null;
+                    CreationTime                       = null;
                     IsChannelCommander                 = null;
                     InputMuted                         = null;
                     OutputMuted                        = null;
@@ -263,8 +264,6 @@ namespace VoipManager.Teamspeak3.Objects
                 if ((sValue = info[KEY_SERVER_GROUP_ID])                    != null && Int32.TryParse(sValue, out iValue)) ServerGroupId                      = iValue;
                 if ((sValue = info[KEY_IDLE_TIME])                          != null && Int32.TryParse(sValue, out iValue)) IdleTime                           = iValue;
                 if ((sValue = info[KEY_CONNECTION_TIME])                    != null && Int32.TryParse(sValue, out iValue)) ConnectionTime                     = iValue;
-                if ((sValue = info[KEY_CREATION_TIME])                      != null && Int32.TryParse(sValue, out iValue)) CreationTime                       = iValue;
-                if ((sValue = info[KEY_LAST_CONNECTED])                     != null && Int32.TryParse(sValue, out iValue)) LastConnected                      = iValue;
                 if ((sValue = info[KEY_TOTAL_CONNECTIONS])                  != null && Int32.TryParse(sValue, out iValue)) TotalConnections                   = iValue;
                 if ((sValue = info[KEY_TALK_POWER])                         != null && Int32.TryParse(sValue, out iValue)) TalkPower                          = iValue;
                 if ((sValue = info[KEY_NEEDED_QUERY_VIEW_POWER])            != null && Int32.TryParse(sValue, out iValue)) NeededQueryViewPower               = iValue;
@@ -283,6 +282,8 @@ namespace VoipManager.Teamspeak3.Objects
                 if ((sValue = info[KEY_BANDWIDTH_RECEIVED_LAST_SEC])        != null && Int32.TryParse(sValue, out iValue)) BandwidthReceivedLastSecond        = iValue;
                 if ((sValue = info[KEY_BANDWIDTH_SENT_LAST_MIN])            != null && Int32.TryParse(sValue, out iValue)) BandwidthSentLastMinute            = iValue;
                 if ((sValue = info[KEY_BANDWIDTH_RECEIVED_LAST_MIN])        != null && Int32.TryParse(sValue, out iValue)) BandwidthReceivedLastMinute        = iValue;
+                if ((sValue = info[KEY_CREATION_TIME])  != null && UInt32.TryParse(sValue, out uiValue)) CreationTime  = uiValue;
+                if ((sValue = info[KEY_LAST_CONNECTED]) != null && UInt32.TryParse(sValue, out uiValue)) LastConnected = uiValue;
                 if ((sValue = info[KEY_IS_CHANNEL_COMMANDER]) != null) IsChannelCommander = (sValue == "1");
                 if ((sValue = info[KEY_INPUT_MUTED])          != null) InputMuted         = (sValue == "1");
                 if ((sValue = info[KEY_OUTPUT_MUTED])         != null) OutputMuted        = (sValue == "1");

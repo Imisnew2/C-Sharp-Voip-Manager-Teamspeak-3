@@ -186,8 +186,6 @@ namespace VoipManager.Teamspeak3.Objects
             public String   HostButtonUrl;
             public String   HostButtonGfxUrl;
             public Int32?   IconId;
-            public Int32?   CreationTime;
-            public Int32?   ChannelsOnline;
             public Int32?   HostMessageMode;
             public Int32?   HostBannerMode;
             public Int32?   EncryptionMode;
@@ -202,12 +200,6 @@ namespace VoipManager.Teamspeak3.Objects
             public Int32?   AntifloodPointsTickReduce;
             public Int32?   AntifloodPointsNeededCommandBlock;
             public Int32?   AntifloodPointsNeededIpBlock;
-            public Int32?   TotalClientConnections;
-            public Int32?   TotalQueryClientConnections;
-            public Int32?   BytesDownloadedMonth;
-            public Int32?   BytesUploadedMonth;
-            public Int32?   BytesDownloadedTotal;
-            public Int32?   BytesUploadedTotal;
             public Int32?   LogClient;
             public Int32?   LogQuery;
             public Int32?   LogChannel;
@@ -241,10 +233,18 @@ namespace VoipManager.Teamspeak3.Objects
             public Int32?   BandwidthReceivedLastSecond;
             public Int32?   BandwidthSentLastMinute;
             public Int32?   BandwidthReceivedLastMinute;
+            public UInt32?  CreationTime;
+            public UInt32?  ChannelsOnline;
+            public UInt32?  TotalClientConnections;
+            public UInt32?  TotalQueryClientConnections;
             public UInt64?  MaxDownloadBandwidth;
             public UInt64?  MaxUploadBandwidth;
             public UInt64?  DownloadQuota;
             public UInt64?  UploadQuota;
+            public UInt64?  BytesDownloadedMonth;
+            public UInt64?  BytesUploadedMonth;
+            public UInt64?  BytesDownloadedTotal;
+            public UInt64?  BytesUploadedTotal;
             public Double?  Ping;
             public Double?  TotalSpeechPacketloss;
             public Double?  TotalKeepalivePacketloss;
@@ -258,6 +258,7 @@ namespace VoipManager.Teamspeak3.Objects
             {
                 String sValue;
                 Int32  iValue;
+                UInt32 uiValue;
                 UInt64 ulValue;
                 Double dValue;
 
@@ -278,8 +279,6 @@ namespace VoipManager.Teamspeak3.Objects
                     HostButtonUrl                       = null;
                     HostButtonGfxUrl                    = null;
                     IconId                              = null;
-                    CreationTime                        = null;
-                    ChannelsOnline                      = null;
                     HostMessageMode                     = null;
                     HostBannerMode                      = null;
                     EncryptionMode                      = null;
@@ -294,12 +293,6 @@ namespace VoipManager.Teamspeak3.Objects
                     AntifloodPointsTickReduce           = null;
                     AntifloodPointsNeededCommandBlock   = null;
                     AntifloodPointsNeededIpBlock        = null;
-                    TotalClientConnections              = null;
-                    TotalQueryClientConnections         = null;
-                    BytesDownloadedMonth                = null;
-                    BytesUploadedMonth                  = null;
-                    BytesDownloadedTotal                = null;
-                    BytesUploadedTotal                  = null;
                     LogClient                           = null;
                     LogQuery                            = null;
                     LogChannel                          = null;
@@ -333,10 +326,18 @@ namespace VoipManager.Teamspeak3.Objects
                     BandwidthReceivedLastSecond         = null;
                     BandwidthSentLastMinute             = null;
                     BandwidthReceivedLastMinute         = null;
+                    CreationTime                        = null;
+                    ChannelsOnline                      = null;
+                    TotalClientConnections              = null;
+                    TotalQueryClientConnections         = null;
                     MaxDownloadBandwidth                = null;
                     MaxUploadBandwidth                  = null;
                     DownloadQuota                       = null;
                     UploadQuota                         = null;
+                    BytesDownloadedMonth                = null;
+                    BytesUploadedMonth                  = null;
+                    BytesDownloadedTotal                = null;
+                    BytesUploadedTotal                  = null;
                     Ping                                = null;
                     TotalSpeechPacketloss               = null;
                     TotalKeepalivePacketloss            = null;
@@ -363,8 +364,6 @@ namespace VoipManager.Teamspeak3.Objects
                 if ((sValue = info[KEY_HOSTBANNER_URL])     != null) HostButtonUrl        = sValue;
                 if ((sValue = info[KEY_HOSTBUTTON_GFX_URL]) != null) HostButtonGfxUrl     = sValue;
                 if ((sValue = info[KEY_ICON_ID])                               != null && Int32.TryParse(sValue, out iValue)) IconId                              = iValue;
-                if ((sValue = info[KEY_CREATION_TIME])                         != null && Int32.TryParse(sValue, out iValue)) CreationTime                        = iValue;
-                if ((sValue = info[KEY_CHANNELS_ONLINE])                       != null && Int32.TryParse(sValue, out iValue)) ChannelsOnline                      = iValue;
                 if ((sValue = info[KEY_HOSTMESSAGE_MODE])                      != null && Int32.TryParse(sValue, out iValue)) HostMessageMode                     = iValue;
                 if ((sValue = info[KEY_HOSTBANNER_MODE])                       != null && Int32.TryParse(sValue, out iValue)) HostBannerMode                      = iValue;
                 if ((sValue = info[KEY_ENCRYPTION_MODE])                       != null && Int32.TryParse(sValue, out iValue)) EncryptionMode                      = iValue;
@@ -379,12 +378,6 @@ namespace VoipManager.Teamspeak3.Objects
                 if ((sValue = info[KEY_ANTIFLOOD_POINTS_TICK_REDUCE])          != null && Int32.TryParse(sValue, out iValue)) AntifloodPointsTickReduce           = iValue;
                 if ((sValue = info[KEY_ANTIFLOOD_POINTS_NEEDED_COMMAND_BLOCK]) != null && Int32.TryParse(sValue, out iValue)) AntifloodPointsNeededCommandBlock   = iValue;
                 if ((sValue = info[KEY_ANTIFLOOD_POINTS_NEEDED_IP_BLOCK])      != null && Int32.TryParse(sValue, out iValue)) AntifloodPointsNeededIpBlock        = iValue;
-                if ((sValue = info[KEY_CLIENT_CONNECTIONS])                    != null && Int32.TryParse(sValue, out iValue)) TotalClientConnections              = iValue;
-                if ((sValue = info[KEY_QUERY_CLIENT_CONNECTIONS])              != null && Int32.TryParse(sValue, out iValue)) TotalQueryClientConnections         = iValue;
-                if ((sValue = info[KEY_MONTH_BYTES_DOWNLOADED])                != null && Int32.TryParse(sValue, out iValue)) BytesDownloadedMonth                = iValue;
-                if ((sValue = info[KEY_MONTH_BYTES_UPLOADED])                  != null && Int32.TryParse(sValue, out iValue)) BytesUploadedMonth                  = iValue;
-                if ((sValue = info[KEY_TOTAL_BYTES_DOWNLOADED])                != null && Int32.TryParse(sValue, out iValue)) BytesDownloadedTotal                = iValue;
-                if ((sValue = info[KEY_TOTAL_BYTES_UPLOADED])                  != null && Int32.TryParse(sValue, out iValue)) BytesUploadedTotal                  = iValue;
                 if ((sValue = info[KEY_LOG_CLIENT])                            != null && Int32.TryParse(sValue, out iValue)) LogClient                           = iValue;
                 if ((sValue = info[KEY_LOG_QUERY])                             != null && Int32.TryParse(sValue, out iValue)) LogQuery                            = iValue;
                 if ((sValue = info[KEY_LOG_CHANNEL])                           != null && Int32.TryParse(sValue, out iValue)) LogChannel                          = iValue;
@@ -418,10 +411,18 @@ namespace VoipManager.Teamspeak3.Objects
                 if ((sValue = info[KEY_BANDWIDTH_RECEIVED_LAST_SECOND_TOTAL])  != null && Int32.TryParse(sValue, out iValue)) BandwidthReceivedLastSecond         = iValue;
                 if ((sValue = info[KEY_BANDWIDTH_SENT_LAST_MINUTE_TOTAL])      != null && Int32.TryParse(sValue, out iValue)) BandwidthSentLastMinute             = iValue;
                 if ((sValue = info[KEY_BANDWIDTH_RECEIVED_LAST_MINUTE_TOTAL])  != null && Int32.TryParse(sValue, out iValue)) BandwidthReceivedLastMinute         = iValue;
+                if ((sValue = info[KEY_CREATION_TIME])            != null && UInt32.TryParse(sValue, out uiValue)) CreationTime                = uiValue;
+                if ((sValue = info[KEY_CHANNELS_ONLINE])          != null && UInt32.TryParse(sValue, out uiValue)) ChannelsOnline              = uiValue;
+                if ((sValue = info[KEY_CLIENT_CONNECTIONS])       != null && UInt32.TryParse(sValue, out uiValue)) TotalClientConnections      = uiValue;
+                if ((sValue = info[KEY_QUERY_CLIENT_CONNECTIONS]) != null && UInt32.TryParse(sValue, out uiValue)) TotalQueryClientConnections = uiValue;
                 if ((sValue = info[KEY_MAX_DOWNLOAD_TOTAL_BANDWIDTH]) != null && UInt64.TryParse(sValue, out ulValue)) MaxDownloadBandwidth = ulValue;
                 if ((sValue = info[KEY_MAX_UPLOAD_TOTAL_BANDWIDTH])   != null && UInt64.TryParse(sValue, out ulValue)) MaxUploadBandwidth   = ulValue;
                 if ((sValue = info[KEY_DOWNLOAD_QUOTA])               != null && UInt64.TryParse(sValue, out ulValue)) DownloadQuota        = ulValue;
                 if ((sValue = info[KEY_UPLOAD_QUOTA])                 != null && UInt64.TryParse(sValue, out ulValue)) UploadQuota          = ulValue;
+                if ((sValue = info[KEY_MONTH_BYTES_DOWNLOADED])       != null && UInt64.TryParse(sValue, out ulValue)) BytesDownloadedMonth = ulValue;
+                if ((sValue = info[KEY_MONTH_BYTES_UPLOADED])         != null && UInt64.TryParse(sValue, out ulValue)) BytesUploadedMonth   = ulValue;
+                if ((sValue = info[KEY_TOTAL_BYTES_DOWNLOADED])       != null && UInt64.TryParse(sValue, out ulValue)) BytesDownloadedTotal = ulValue;
+                if ((sValue = info[KEY_TOTAL_BYTES_UPLOADED])         != null && UInt64.TryParse(sValue, out ulValue)) BytesUploadedTotal   = ulValue;
                 if ((sValue = info[KEY_TOTAL_PING])                        != null && Double.TryParse(sValue, out dValue)) Ping                           = dValue;
                 if ((sValue = info[KEY_TOTAL_PACKETLOSS_SPEECH])           != null && Double.TryParse(sValue, out dValue)) TotalSpeechPacketloss          = dValue;
                 if ((sValue = info[KEY_TOTAL_PACKETLOSS_KEEPALIVE])        != null && Double.TryParse(sValue, out dValue)) TotalKeepalivePacketloss       = dValue;
@@ -483,7 +484,6 @@ namespace VoipManager.Teamspeak3.Objects
             public String   HostButtonUrl                       { get { return Raw.HostButtonUrl;                       } set { Raw.HostButtonUrl                       = value; } }
             public String   HostButtonGfxUrl                    { get { return Raw.HostButtonGfxUrl;                    } set { Raw.HostButtonGfxUrl                    = value; } }
             public Int32?   IconId                              { get { return Raw.IconId;                              } set { Raw.IconId                              = value; } }
-            public Int32?   ChannelsOnline                      { get { return Raw.ChannelsOnline;                      } set { Raw.ChannelsOnline                      = value; } }
             public Int32?   HostBannerGfxInterval               { get { return Raw.HostBannerGfxInterval;               } set { Raw.HostBannerGfxInterval               = value; } }
             public Int32?   DefaultServerGroup                  { get { return Raw.DefaultServerGroup;                  } set { Raw.DefaultServerGroup                  = value; } }
             public Int32?   DefaultChannelGroup                 { get { return Raw.DefaultChannelGroup;                 } set { Raw.DefaultChannelGroup                 = value; } }
@@ -495,12 +495,6 @@ namespace VoipManager.Teamspeak3.Objects
             public Int32?   AntifloodPointsTickReduce           { get { return Raw.AntifloodPointsTickReduce;           } set { Raw.AntifloodPointsTickReduce           = value; } }
             public Int32?   AntifloodPointsNeededCommandBlock   { get { return Raw.AntifloodPointsNeededCommandBlock;   } set { Raw.AntifloodPointsNeededCommandBlock   = value; } }
             public Int32?   AntifloodPointsNeededIpBlock        { get { return Raw.AntifloodPointsNeededIpBlock;        } set { Raw.AntifloodPointsNeededIpBlock        = value; } }
-            public Int32?   TotalClientConnections              { get { return Raw.TotalClientConnections;              } set { Raw.TotalClientConnections              = value; } }
-            public Int32?   TotalQueryClientConnections         { get { return Raw.TotalQueryClientConnections;         } set { Raw.TotalQueryClientConnections         = value; } }
-            public Int32?   BytesDownloadedMonth                { get { return Raw.BytesDownloadedMonth;                } set { Raw.BytesDownloadedMonth                = value; } }
-            public Int32?   BytesUploadedMonth                  { get { return Raw.BytesUploadedMonth;                  } set { Raw.BytesUploadedMonth                  = value; } }
-            public Int32?   BytesDownloadedTotal                { get { return Raw.BytesDownloadedTotal;                } set { Raw.BytesDownloadedTotal                = value; } }
-            public Int32?   BytesUploadedTotal                  { get { return Raw.BytesUploadedTotal;                  } set { Raw.BytesUploadedTotal                  = value; } }
             public Int32?   ReservedSlots                       { get { return Raw.ReservedSlots;                       } set { Raw.ReservedSlots                       = value; } }
             public Int32?   RequestsForPrivilegeKey             { get { return Raw.RequestsForPrivilegeKey;             } set { Raw.RequestsForPrivilegeKey             = value; } }
             public Int32?   MinimumSecurityLevel                { get { return Raw.MinimumSecurityLevel;                } set { Raw.MinimumSecurityLevel                = value; } }
@@ -528,10 +522,17 @@ namespace VoipManager.Teamspeak3.Objects
             public Int32?   BandwidthReceivedLastSecond         { get { return Raw.BandwidthReceivedLastSecond;         } set { Raw.BandwidthReceivedLastSecond         = value; } }
             public Int32?   BandwidthSentLastMinute             { get { return Raw.BandwidthSentLastMinute;             } set { Raw.BandwidthSentLastMinute             = value; } }
             public Int32?   BandwidthReceivedLastMinute         { get { return Raw.BandwidthReceivedLastMinute;         } set { Raw.BandwidthReceivedLastMinute         = value; } }
+            public UInt32?  ChannelsOnline                      { get { return Raw.ChannelsOnline;                      } set { Raw.ChannelsOnline                      = value; } }
+            public UInt32?  TotalClientConnections              { get { return Raw.TotalClientConnections;              } set { Raw.TotalClientConnections              = value; } }
+            public UInt32?  TotalQueryClientConnections         { get { return Raw.TotalQueryClientConnections;         } set { Raw.TotalQueryClientConnections         = value; } }
             public UInt64?  MaxDownloadBandwidth                { get { return Raw.MaxDownloadBandwidth;                } set { Raw.MaxDownloadBandwidth                = value; } }
             public UInt64?  MaxUploadBandwidth                  { get { return Raw.MaxUploadBandwidth;                  } set { Raw.MaxUploadBandwidth                  = value; } }
             public UInt64?  DownloadQuota                       { get { return Raw.DownloadQuota;                       } set { Raw.DownloadQuota                       = value; } }
             public UInt64?  UploadQuota                         { get { return Raw.UploadQuota;                         } set { Raw.UploadQuota                         = value; } }
+            public UInt64?  BytesDownloadedMonth                { get { return Raw.BytesDownloadedMonth;                } set { Raw.BytesDownloadedMonth                = value; } }
+            public UInt64?  BytesUploadedMonth                  { get { return Raw.BytesUploadedMonth;                  } set { Raw.BytesUploadedMonth                  = value; } }
+            public UInt64?  BytesDownloadedTotal                { get { return Raw.BytesDownloadedTotal;                } set { Raw.BytesDownloadedTotal                = value; } }
+            public UInt64?  BytesUploadedTotal                  { get { return Raw.BytesUploadedTotal;                  } set { Raw.BytesUploadedTotal                  = value; } }
             public Double?  Ping                                { get { return Raw.Ping;                                } set { Raw.Ping                                = value; } }
             public Double?  TotalSpeechPacketloss               { get { return Raw.TotalSpeechPacketloss;               } set { Raw.TotalSpeechPacketloss               = value; } }
             public Double?  TotalKeepalivePacketloss            { get { return Raw.TotalKeepalivePacketloss;            } set { Raw.TotalKeepalivePacketloss            = value; } }
