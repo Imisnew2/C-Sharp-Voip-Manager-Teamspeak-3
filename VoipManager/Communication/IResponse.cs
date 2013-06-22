@@ -22,7 +22,7 @@ namespace VoipManager.Communication
 {
     public interface IResponse
     {
-        IRequest Request { get; set; }
-        Byte[]   Raw     { get; }
+        Byte[] Raw     { get; }
+        String RawText { get; }
     }
 }

@@ -44,7 +44,6 @@
     <Compile Include="Teamspeak3\Communication\Teamspeak3Request.cs" />
     <Compile Include="Teamspeak3\Communication\Teamspeak3Response.cs" />
     <Compile Include="Connections\Teamspeak3Connection.cs" />
-    <Compile Include="Teamspeak3\Teamspeak3Settings.cs" />
     <Compile Include="Teamspeak3\Objects\Enumerations.cs" />
     <Compile Include="Teamspeak3\Objects\Teamspeak3Channel.cs" />
     <Compile Include="Teamspeak3\Objects\Teamspeak3Client.cs" />

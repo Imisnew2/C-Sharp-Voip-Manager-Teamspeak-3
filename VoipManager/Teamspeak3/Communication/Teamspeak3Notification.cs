@@ -17,34 +17,38 @@
  * ************************************************************************** */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace VoipManager.Teamspeak3.Communication
 {
     public sealed class Teamspeak3Notification : Teamspeak3Response
     {
-        // Constants
+        // Examples: notifyclientleftview cfid=1 ctid=0 reasonid=8 reasonmsg=leaving clid=5\n\r
+        internal static readonly Regex NotificationRegex = new Regex(String.Format("^notify.+?{0}", Teamspeak3Message.SeperatorRegex));
+
         public static readonly String Seperator      = Teamspeak3Group.Seperator;
         public static readonly String SeperatorRegex = Teamspeak3Group.SeperatorRegex;
 
-        /// <example>notifyclientleftview cfid=1 ctid=0 reasonid=8 reasonmsg=leaving clid=5\n\r</example>
-        internal static readonly Regex NotificationRegex = new Regex(String.Format("^notify.+?{0}", Teamspeak3Message.SeperatorRegex));
 
-        // A notification is formatted the same way as a Teamspeak3 Group response.
-        private readonly Teamspeak3Group mNotification;
-
-        // Event name and access to values.
-        public String Event { get { return mNotification.Pair.Key; } }
-        public String this[String key] { get { return mNotification[key]; } }
+        /// <summary>
+        /// Information related to the notification.
+        /// </summary>
+        public readonly Teamspeak3Group Notification;
+        public String Event               { get { return Notification.Keys.FirstOrDefault(); } }
+        public String this[String key]    { get { return Notification[key]; } }
+        public IEnumerable<String> Keys   { get { return Notification.Keys; } }
+        public IEnumerable<String> Values { get { return Notification.Values; } }
 
 
         /// <summary>
         /// Parses the raw response as a notification response.
         /// </summary>
         /// <param name="raw">This variable's raw response from the server.</param>
-        public Teamspeak3Notification(String raw) : base(raw)
+        public Teamspeak3Notification(String rawText) : base(rawText)
         {
-            mNotification = new Teamspeak3Group(raw.Remove(0, "notify".Length));
+            Notification = new Teamspeak3Group(rawText.Remove(0, "notify".Length));
         }
     }
 }

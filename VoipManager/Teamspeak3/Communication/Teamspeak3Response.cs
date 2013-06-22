@@ -17,38 +17,36 @@
  * ************************************************************************** */
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Text;
-using VoipManager.Communication;
 
 namespace VoipManager.Teamspeak3.Communication
 {
+    using VoipManager.Communication;
+
     public abstract class Teamspeak3Response : IResponse
     {
-        // We only want to expose the normalized values for a Teamspeak 3 Response.
-        public Teamspeak3Request Request { get; private set; }
-        public String            Raw     { get; private set; }
+        #region IResponse
 
-        // If they cast it to a IResponse, they can get the 'raw' values.
-        IRequest IResponse.Request { 
-            get { return Request; }
-            set { Request = (Teamspeak3Request)value; }
+        public Byte[] Raw
+        {
+            get { return Encoding.Default.GetBytes(RawText); }
         }
-        Byte[] IResponse.Raw {
-            get { return Encoding.Default.GetBytes(Raw); }
-        }
+        public String RawText { get; private set; }
+
+        #endregion IResponse
+
 
 
         /// <summary>
         /// Parses the raw response into logical sections and groups.
         /// </summary>
         /// <exception cref="System.ArgumentNullException"/>
-        protected Teamspeak3Response(String raw)
+        protected Teamspeak3Response(String rawText)
         {
-            if (raw == null) {
-                throw new ArgumentNullException("raw");
-            }
+            Utilities.Require<ArgumentNullException>(rawText != null, "raw");
 
-            Raw = raw;
+            RawText = rawText;
         }
     }
 }

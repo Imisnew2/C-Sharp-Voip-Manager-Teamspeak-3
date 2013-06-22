@@ -25,14 +25,20 @@ using VoipManager.Teamspeak3.Objects;
 
 namespace VoipManager
 {
-    class Entry
+    class Example
     {
         static void Main()
         {
             // Uses the default settings:
             // - Timeout from trying to connect after 10 seconds.
-            // - Don't allow requests to be sent in parallel.
-            var tConnection = new Teamspeak3Connection(new Teamspeak3Settings());
+            var tConnection = new Teamspeak3Connection();
+
+            tConnection.Connected    += (c) => Console.WriteLine("[Status] Connected!");
+            tConnection.Disconnected += (c) => Console.WriteLine("[Status] Disconnected!");
+            tConnection.SentRequest      += (c, r) => Console.WriteLine("[Query] Request Sent: {0}",      r.Command);
+            tConnection.ReceivedResponse += (c, r) => Console.WriteLine("[Query] Response Received: {0}", r.Id);
+            tConnection.Notified += (c, n) => Console.WriteLine("[Notification] Seen {0}",   n.Event);
+            tConnection.Banned   += (c, r) => Console.WriteLine("[Banned] Crap: {0} -- {1}", r.Message, r.ExtraMessage);
 
             // Attempt to connect to the server at 127.0.0.1:10011.
             tConnection.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 10011));
@@ -42,14 +48,14 @@ namespace VoipManager
             tConnection.Send(Teamspeak3Request.BuildUsePort(9987));
 
             // Request the client list from the server and parse the response into clients.
-            var tClientMessage = (Teamspeak3Message)tConnection.Send(Teamspeak3Request.BuildClientList());
+            var tClientMessage = tConnection.Send(Teamspeak3Request.BuildClientList());
             var tClients = tClientMessage.Sections
                 .SelectMany(x => x.Groups)
                 .Select(x => new Teamspeak3Client(x))
                 .ToList();
 
             // Requeust the channel list from the server and parse the response into channels.
-            var tChannelMessage = (Teamspeak3Message)tConnection.Send(Teamspeak3Request.BuildClientList());
+            var tChannelMessage = tConnection.Send(Teamspeak3Request.BuildClientList());
             var tChannels = tChannelMessage.Sections
                 .SelectMany(x => x.Groups)
                 .Select(x => new Teamspeak3Channel(x))
@@ -61,21 +67,26 @@ namespace VoipManager
             tConnection.Send(tNotificationRequest);
 
             // Example request with error checking.
-            var tResponse = (Teamspeak3Message)tConnection.Send(Teamspeak3Request.BuildWhoAmI());
+            var tResponse = tConnection.Send(Teamspeak3Request.BuildWhoAmI());
             if (tResponse == null) {
                 // The connection is closed or had an error?
                 Console.WriteLine("Connection Failure!");
-            }
-            else if (tResponse.Id != 0) {
-                // Ahhhh, what went wrong?
-                Console.WriteLine("Error: {0}", tResponse.Message);
             }
             else if (tResponse.Id == 3331 || tResponse.Id == 3329) {
                 // Yarg, we've been banned due to spamming!
                 Console.WriteLine("Banned: {0} -- {1}", tResponse.Message, tResponse.ExtraMessage);
             }
+            else if (tResponse.Id != 0) {
+                // Ahhhh, what went wrong?
+                Console.WriteLine("Error: {0}", tResponse.Message);
+            }
+
+            tConnection.Send(Teamspeak3Request.BuildLogout());
+            tConnection.Send(Teamspeak3Request.BuildQuit());
+            tConnection.Send(Teamspeak3Request.BuildWhoAmI());
 
             Console.ReadKey();
+            tConnection.Dispose();
         }
     }
 }

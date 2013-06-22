@@ -17,10 +17,11 @@
  * ************************************************************************** */
 
 using System;
-using VoipManager.Teamspeak3.Communication;
 
 namespace VoipManager.Teamspeak3.Objects
 {
+    using VoipManager.Teamspeak3.Communication;
+
     public class Teamspeak3Server
     {
         #region Server Data Keys
@@ -125,6 +126,7 @@ namespace VoipManager.Teamspeak3.Objects
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                            Raw Classes                            *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         public class RawNormalInfo
         {
             public String   Name;
@@ -437,187 +439,89 @@ namespace VoipManager.Teamspeak3.Objects
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                          Parsed Classes                           *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-        public class NormalInfo
+
+        public class NormalInfo : RawNormalInfo
         {
-            public RawNormalInfo Raw { get; private set; }
-
-            public String Name               { get { return Raw.Name;               } set { Raw.Name               = value; } }
-            public String Status             { get { return Raw.Status;             } set { Raw.Status             = value; } }
-            public Int32? Id                 { get { return Raw.Id;                 } set { Raw.Id                 = value; } }
-            public Int32? Port               { get { return Raw.Port;               } set { Raw.Port               = value; } }
-            public Int32? MachineId          { get { return Raw.MachineId;          } set { Raw.MachineId          = value; } }
-            public Int32? ClientsOnline      { get { return Raw.ClientsOnline;      } set { Raw.ClientsOnline      = value; } }
-            public Int32? QueryClientsOnline { get { return Raw.QueryClientsOnline; } set { Raw.QueryClientsOnline = value; } }
-            public Int32? MaxClients         { get { return Raw.MaxClients;         } set { Raw.MaxClients         = value; } }
-            public Boolean? AutoStart        { get { return Raw.AutoStart;          } set { Raw.AutoStart          = value; } }
-
-            public TimeSpan? UpTime {
-                get { return  (Raw.UpTime.HasValue) ? TimeSpan.FromSeconds(Raw.UpTime.Value) : default(TimeSpan?); }
-                set { Raw.UpTime = (value.HasValue) ? (Int32?)value.Value.TotalSeconds       : default(Int32?); }
-            }
-
-            public NormalInfo() { Raw = new RawNormalInfo(); }
-            
-
-            public void SetData(Teamspeak3Group info, Boolean reset)
-            {
-                Raw.SetData(info, reset);
+            new public TimeSpan? UpTime {
+                get { return  (base.UpTime.HasValue) ? TimeSpan.FromSeconds(base.UpTime.Value) : default(TimeSpan?); }
+                set { base.UpTime = (value.HasValue) ? (Int32?)value.Value.TotalSeconds : default(Int32?); }
             }
         }
-        public class AdvancedInfo
+        public class AdvancedInfo : RawAdvancedInfo
         {
-            public RawAdvancedInfo Raw { get; private set; }
-   
-            public String   Ip                                  { get { return Raw.Ip;                                  } set { Raw.Ip                                  = value; } }
-            public String   UniqueId                            { get { return Raw.UniqueId;                            } set { Raw.UniqueId                            = value; } }
-            public String   PhoneticName                        { get { return Raw.PhoneticName;                        } set { Raw.PhoneticName                        = value; } }
-            public String   WelcomeMessage                      { get { return Raw.WelcomeMessage;                      } set { Raw.WelcomeMessage                      = value; } }
-            public String   Platform                            { get { return Raw.Platform;                            } set { Raw.Platform                            = value; } }
-            public String   Version                             { get { return Raw.Version;                             } set { Raw.Version                             = value; } }
-            public String   MinimumClientVersion                { get { return Raw.MinimumClientVersion;                } set { Raw.MinimumClientVersion                = value; } }
-            public String   Password                            { get { return Raw.Password;                            } set { Raw.Password                            = value; } }
-            public String   FilePath                            { get { return Raw.FilePath;                            } set { Raw.FilePath                            = value; } }
-            public String   HostMessage                         { get { return Raw.HostMessage;                         } set { Raw.HostMessage                         = value; } }
-            public String   HostBannerUrl                       { get { return Raw.HostBannerUrl;                       } set { Raw.HostBannerUrl                       = value; } }
-            public String   HostBannerGfxUrl                    { get { return Raw.HostBannerGfxUrl;                    } set { Raw.HostBannerGfxUrl                    = value; } }
-            public String   HostButtonToolTip                   { get { return Raw.HostButtonToolTip;                   } set { Raw.HostButtonToolTip                   = value; } }
-            public String   HostButtonUrl                       { get { return Raw.HostButtonUrl;                       } set { Raw.HostButtonUrl                       = value; } }
-            public String   HostButtonGfxUrl                    { get { return Raw.HostButtonGfxUrl;                    } set { Raw.HostButtonGfxUrl                    = value; } }
-            public Int32?   IconId                              { get { return Raw.IconId;                              } set { Raw.IconId                              = value; } }
-            public Int32?   HostBannerGfxInterval               { get { return Raw.HostBannerGfxInterval;               } set { Raw.HostBannerGfxInterval               = value; } }
-            public Int32?   DefaultServerGroup                  { get { return Raw.DefaultServerGroup;                  } set { Raw.DefaultServerGroup                  = value; } }
-            public Int32?   DefaultChannelGroup                 { get { return Raw.DefaultChannelGroup;                 } set { Raw.DefaultChannelGroup                 = value; } }
-            public Int32?   DefaultChannelAdminGroup            { get { return Raw.DefaultChannelAdminGroup;            } set { Raw.DefaultChannelAdminGroup            = value; } }
-            public Int32?   ComplainAutoBanCount                { get { return Raw.ComplainAutoBanCount;                } set { Raw.ComplainAutoBanCount                = value; } }
-            public Int32?   ComplainAutoBanTime                 { get { return Raw.ComplainAutoBanTime;                 } set { Raw.ComplainAutoBanTime                 = value; } }
-            public Int32?   ComplainRemoveTime                  { get { return Raw.ComplainRemoveTime;                  } set { Raw.ComplainRemoveTime                  = value; } }
-            public Int32?   MinClientsNeededBeforeForcedSilence { get { return Raw.MinClientsNeededBeforeForcedSilence; } set { Raw.MinClientsNeededBeforeForcedSilence = value; } }
-            public Int32?   AntifloodPointsTickReduce           { get { return Raw.AntifloodPointsTickReduce;           } set { Raw.AntifloodPointsTickReduce           = value; } }
-            public Int32?   AntifloodPointsNeededCommandBlock   { get { return Raw.AntifloodPointsNeededCommandBlock;   } set { Raw.AntifloodPointsNeededCommandBlock   = value; } }
-            public Int32?   AntifloodPointsNeededIpBlock        { get { return Raw.AntifloodPointsNeededIpBlock;        } set { Raw.AntifloodPointsNeededIpBlock        = value; } }
-            public Int32?   ReservedSlots                       { get { return Raw.ReservedSlots;                       } set { Raw.ReservedSlots                       = value; } }
-            public Int32?   RequestsForPrivilegeKey             { get { return Raw.RequestsForPrivilegeKey;             } set { Raw.RequestsForPrivilegeKey             = value; } }
-            public Int32?   MinimumSecurityLevel                { get { return Raw.MinimumSecurityLevel;                } set { Raw.MinimumSecurityLevel                = value; } }
-            public Int32?   FiletransferBandwidthSent           { get { return Raw.FiletransferBandwidthSent;           } set { Raw.FiletransferBandwidthSent           = value; } }
-            public Int32?   FiletransferBandwidthReceived       { get { return Raw.FiletransferBandwidthReceived;       } set { Raw.FiletransferBandwidthReceived       = value; } }
-            public Int32?   FiletransferBytesSentTotal          { get { return Raw.FiletransferBytesSentTotal;          } set { Raw.FiletransferBytesSentTotal          = value; } }
-            public Int32?   FiletransferBytesReceivedTotal      { get { return Raw.FiletransferBytesReceivedTotal;      } set { Raw.FiletransferBytesReceivedTotal      = value; } }
-            public Int32?   SpeechPacketsSent                   { get { return Raw.SpeechPacketsSent;                   } set { Raw.SpeechPacketsSent                   = value; } }
-            public Int32?   SpeechPacketsReceived               { get { return Raw.SpeechPacketsReceived;               } set { Raw.SpeechPacketsReceived               = value; } }
-            public Int32?   SpeechBytesSent                     { get { return Raw.SpeechBytesSent;                     } set { Raw.SpeechBytesSent                     = value; } }
-            public Int32?   SpeechBytesReceived                 { get { return Raw.SpeechBytesReceived;                 } set { Raw.SpeechBytesReceived                 = value; } }
-            public Int32?   KeepalivePacketsSent                { get { return Raw.KeepalivePacketsSent;                } set { Raw.KeepalivePacketsSent                = value; } }
-            public Int32?   KeepalivePacketsReceived            { get { return Raw.KeepalivePacketsReceived;            } set { Raw.KeepalivePacketsReceived            = value; } }
-            public Int32?   KeepaliveBytesSent                  { get { return Raw.KeepaliveBytesSent;                  } set { Raw.KeepaliveBytesSent                  = value; } }
-            public Int32?   KeepaliveBytesReceived              { get { return Raw.KeepaliveBytesReceived;              } set { Raw.KeepaliveBytesReceived              = value; } }
-            public Int32?   ControlPacketsSent                  { get { return Raw.ControlPacketsSent;                  } set { Raw.ControlPacketsSent                  = value; } }
-            public Int32?   ControlPacketsReceived              { get { return Raw.ControlPacketsReceived;              } set { Raw.ControlPacketsReceived              = value; } }
-            public Int32?   ControlBytesSent                    { get { return Raw.ControlBytesSent;                    } set { Raw.ControlBytesSent                    = value; } }
-            public Int32?   ControlBytesReceived                { get { return Raw.ControlBytesReceived;                } set { Raw.ControlBytesReceived                = value; } }
-            public Int32?   PacketsSentTotal                    { get { return Raw.PacketsSentTotal;                    } set { Raw.PacketsSentTotal                    = value; } }
-            public Int32?   PacketsReceivedTotal                { get { return Raw.PacketsReceivedTotal;                } set { Raw.PacketsReceivedTotal                = value; } }
-            public Int32?   BytesSentTotal                      { get { return Raw.BytesSentTotal;                      } set { Raw.BytesSentTotal                      = value; } }
-            public Int32?   BytesReceivedTotal                  { get { return Raw.BytesReceivedTotal;                  } set { Raw.BytesReceivedTotal                  = value; } }
-            public Int32?   BandwidthSentLastSecond             { get { return Raw.BandwidthSentLastSecond;             } set { Raw.BandwidthSentLastSecond             = value; } }
-            public Int32?   BandwidthReceivedLastSecond         { get { return Raw.BandwidthReceivedLastSecond;         } set { Raw.BandwidthReceivedLastSecond         = value; } }
-            public Int32?   BandwidthSentLastMinute             { get { return Raw.BandwidthSentLastMinute;             } set { Raw.BandwidthSentLastMinute             = value; } }
-            public Int32?   BandwidthReceivedLastMinute         { get { return Raw.BandwidthReceivedLastMinute;         } set { Raw.BandwidthReceivedLastMinute         = value; } }
-            public UInt32?  ChannelsOnline                      { get { return Raw.ChannelsOnline;                      } set { Raw.ChannelsOnline                      = value; } }
-            public UInt32?  TotalClientConnections              { get { return Raw.TotalClientConnections;              } set { Raw.TotalClientConnections              = value; } }
-            public UInt32?  TotalQueryClientConnections         { get { return Raw.TotalQueryClientConnections;         } set { Raw.TotalQueryClientConnections         = value; } }
-            public UInt64?  MaxDownloadBandwidth                { get { return Raw.MaxDownloadBandwidth;                } set { Raw.MaxDownloadBandwidth                = value; } }
-            public UInt64?  MaxUploadBandwidth                  { get { return Raw.MaxUploadBandwidth;                  } set { Raw.MaxUploadBandwidth                  = value; } }
-            public UInt64?  DownloadQuota                       { get { return Raw.DownloadQuota;                       } set { Raw.DownloadQuota                       = value; } }
-            public UInt64?  UploadQuota                         { get { return Raw.UploadQuota;                         } set { Raw.UploadQuota                         = value; } }
-            public UInt64?  BytesDownloadedMonth                { get { return Raw.BytesDownloadedMonth;                } set { Raw.BytesDownloadedMonth                = value; } }
-            public UInt64?  BytesUploadedMonth                  { get { return Raw.BytesUploadedMonth;                  } set { Raw.BytesUploadedMonth                  = value; } }
-            public UInt64?  BytesDownloadedTotal                { get { return Raw.BytesDownloadedTotal;                } set { Raw.BytesDownloadedTotal                = value; } }
-            public UInt64?  BytesUploadedTotal                  { get { return Raw.BytesUploadedTotal;                  } set { Raw.BytesUploadedTotal                  = value; } }
-            public Double?  Ping                                { get { return Raw.Ping;                                } set { Raw.Ping                                = value; } }
-            public Double?  TotalSpeechPacketloss               { get { return Raw.TotalSpeechPacketloss;               } set { Raw.TotalSpeechPacketloss               = value; } }
-            public Double?  TotalKeepalivePacketloss            { get { return Raw.TotalKeepalivePacketloss;            } set { Raw.TotalKeepalivePacketloss            = value; } }
-            public Double?  TotalControlPacketloss              { get { return Raw.TotalControlPacketloss;              } set { Raw.TotalControlPacketloss              = value; } }
-            public Double?  TotalPacketlossAll                  { get { return Raw.TotalPacketlossAll;                  } set { Raw.TotalPacketlossAll                  = value; } }
-            public Double?  PrioritySpeakerDimmModificator      { get { return Raw.PrioritySpeakerDimmModificator;      } set { Raw.PrioritySpeakerDimmModificator      = value; } }
-            public Boolean? IsPassworded                        { get { return Raw.IsPassworded;                        } set { Raw.IsPassworded                        = value; } }
-            public Boolean? IsWebListEnabled                    { get { return Raw.IsWebListEnabled;                    } set { Raw.IsWebListEnabled                    = value; } }
-            
-            public DateTime? CreationTime {
-                get { return Utilities.UtcIntegerToDateTime(Raw.CreationTime); }
-                set { Raw.CreationTime = Utilities.DateTimeToUtcInteger(value); }
+            new public DateTime? CreationTime {
+                get { return Utilities.UtcIntegerToDateTime(base.CreationTime); }
+                set { base.CreationTime = Utilities.DateTimeToUtcInteger(value); }
             }
-            public HostMessageMode? HostMessageMode {
-                get { return (HostMessageMode?)Raw.HostMessageMode; }
-                set { Raw.HostMessageMode = (Int32?)value; }
+            new public HostMessageMode? HostMessageMode {
+                get { return (HostMessageMode?)base.HostMessageMode; }
+                set { base.HostMessageMode = (Int32?)value; }
             }
-            public HostBannerMode? HostBannerMode {
-                get { return (HostBannerMode?)Raw.HostBannerMode; }
-                set { Raw.HostBannerMode = (Int32?)value; }
+            new public HostBannerMode? HostBannerMode {
+                get { return (HostBannerMode?)base.HostBannerMode; }
+                set { base.HostBannerMode = (Int32?)value; }
             }
-            public CodecEncryptionMode? EncryptionMode {
-                get { return (CodecEncryptionMode?)Raw.EncryptionMode; }
-                set { Raw.EncryptionMode = (Int32?)value; }
+            new public CodecEncryptionMode? EncryptionMode {
+                get { return (CodecEncryptionMode?)base.EncryptionMode; }
+                set { base.EncryptionMode = (Int32?)value; }
             }
-            public LogLevel? LogClient {
-                get { return (LogLevel?)Raw.LogClient; }
-                set { Raw.LogClient = (Int32?)value; }
+            new public LogLevel? LogClient {
+                get { return (LogLevel?)base.LogClient; }
+                set { base.LogClient = (Int32?)value; }
             }
-            public LogLevel? LogQuery {
-                get { return (LogLevel?)Raw.LogQuery; }
-                set { Raw.LogQuery = (Int32?)value; }
+            new public LogLevel? LogQuery {
+                get { return (LogLevel?)base.LogQuery; }
+                set { base.LogQuery = (Int32?)value; }
             }
-            public LogLevel? LogChannel {
-                get { return (LogLevel?)Raw.LogChannel; }
-                set { Raw.LogChannel = (Int32?)value; }
+            new public LogLevel? LogChannel {
+                get { return (LogLevel?)base.LogChannel; }
+                set { base.LogChannel = (Int32?)value; }
             }
-            public LogLevel? LogPermissions {
-                get { return (LogLevel?)Raw.LogPermissions; }
-                set { Raw.LogPermissions = (Int32?)value; }
+            new public LogLevel? LogPermissions {
+                get { return (LogLevel?)base.LogPermissions; }
+                set { base.LogPermissions = (Int32?)value; }
             }
-            public LogLevel? LogServer {
-                get { return (LogLevel?)Raw.LogServer; }
-                set { Raw.LogServer = (Int32?)value; }
+            new public LogLevel? LogServer {
+                get { return (LogLevel?)base.LogServer; }
+                set { base.LogServer = (Int32?)value; }
             }
-            public LogLevel? LogFiletransfer {
-                get { return (LogLevel?)Raw.LogFiletransfer; }
-                set { Raw.LogFiletransfer = (Int32?)value; }
-            }
-
-            public AdvancedInfo() { Raw = new RawAdvancedInfo(); }
-            
-
-            public void SetData(Teamspeak3Group info, Boolean reset)
-            {
-                Raw.SetData(info, reset);
+            new public LogLevel? LogFiletransfer {
+                get { return (LogLevel?)base.LogFiletransfer; }
+                set { base.LogFiletransfer = (Int32?)value; }
             }
         }
 
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         *                        Teamspeak 3 Server                         *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
         /// <summary>Info from a "serverlist" command.</summary>
         public NormalInfo Normal { get; private set; }
+
         /// <summary>Info from a "serverinfo" command.</summary>
         public AdvancedInfo Advanced { get; private set; }
 
-        /// <summary>Initializes a server with default values.</summary>
-        public Teamspeak3Server()
+
+        /// <summary>
+        /// Initializes a server with the specified data.
+        /// </summary>
+        public Teamspeak3Server(Teamspeak3Group info = null)
         {
-            Normal = new NormalInfo();
+            Normal   = new NormalInfo();
             Advanced = new AdvancedInfo();
-        }
-
-        /// <summary>Initializes a server with the specified data.</summary>
-        public Teamspeak3Server(Teamspeak3Group info) : this()
-        {
-            Normal.SetData(info, true);
-            Advanced.SetData(info, true);
+            Update(info);
         }
 
 
-        /// <summary>Updates a server with the specified data.</summary>
-        public void Update(Teamspeak3Group info)
+        /// <summary>
+        /// Updates a server with the specified data.
+        /// </summary>
+        public void Update(Teamspeak3Group info, Boolean clear = false)
         {
-            Normal.SetData(info, false);
-            Advanced.SetData(info, false);
+            if (info != null) {
+                Normal.SetData(info, clear);
+                Advanced.SetData(info, clear);
+            }
         }
     }
 }

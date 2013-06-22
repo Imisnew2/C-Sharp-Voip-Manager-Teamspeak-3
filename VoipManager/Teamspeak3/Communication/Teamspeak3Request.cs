@@ -18,21 +18,27 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
-using VoipManager.Communication;
 
 namespace VoipManager.Teamspeak3.Communication
 {
+    using VoipManager.Communication;
+
     public class Teamspeak3Request : IRequest
     {
-        // Arguments
         private readonly Dictionary<String, String> mParameters = new Dictionary<String, String>();
-        private readonly List<String>               mOptions    = new List<String>();
+        private readonly HashSet<String>            mOptions    = new HashSet<String>();
 
-        // We only want to expose the normalized values for a Teamspeak 3 Request.
-        public String Command { get; private set; }
-        public String Raw {
+        #region IRequest
+
+        public Byte[] Raw
+        {
+            get { return Encoding.Default.GetBytes(RawText); }
+        }
+        public String RawText
+        {
             get {
                 var request = Command;
                 request = mParameters.Aggregate(
@@ -44,18 +50,22 @@ namespace VoipManager.Teamspeak3.Communication
                 return request + "\n";
             }
         }
+        public String Command { get; private set; }
 
-        // If they cast it to a IRequest, they can get the 'raw' values.
-        Byte[] IRequest.Raw { 
-            get { return Encoding.Default.GetBytes(Raw); }
-        }
+        #endregion IRequest
+
+
+
 
         /// <summary>
         /// Creates a request with the specified command.
         /// </summary>
         /// <param name="command">The action to request from the server.</param>
+        /// <exception cref="System.ArgumentException"/>
         public Teamspeak3Request(String command)
         {
+            Utilities.Require<ArgumentException>(!String.IsNullOrWhiteSpace(command), "The argument \"command\" cannot be null or empty.");
+
             Command = command;
         }
 
@@ -66,18 +76,12 @@ namespace VoipManager.Teamspeak3.Communication
         /// <exception cref="System.ArgumentException"/>
         public void AddParameter(String key, String value)
         {
-            if (String.IsNullOrWhiteSpace(key) || String.IsNullOrWhiteSpace(value)) {
-                throw new ArgumentException("Neither the key nor value can be null or empty.");
-            }
+            Utilities.Require<ArgumentException>(!String.IsNullOrWhiteSpace(key),   "The argument \"key\" cannot be null or empty.");
+            Utilities.Require<ArgumentException>(!String.IsNullOrWhiteSpace(value), "The argument \"value\" cannot be null or empty.");
 
             var tKey   = EscapeString(key.Trim());
             var tValue = EscapeString(value.Trim());
-            if (!mParameters.ContainsKey(tKey)) {
-                mParameters.Add(tKey, tValue);
-            }
-            else {
-                mParameters[tKey] = tValue;
-            }
+            mParameters.AddOrUpdate(tKey, tValue);
         }
 
         /// <summary>
@@ -86,31 +90,31 @@ namespace VoipManager.Teamspeak3.Communication
         /// <exception cref="System.ArgumentException"/>
         public void AddOption(String option)
         {
-            if (String.IsNullOrWhiteSpace(option)) {
-                throw new ArgumentException("The option can not be null.");
-            }
+            Utilities.Require<ArgumentException>(!String.IsNullOrWhiteSpace(option), "The argument \"option\" cannot be null or empty.");
 
             var tOption = EscapeString(option.Trim());
-            if (!mOptions.Contains(tOption)) {
-                mOptions.Add(tOption);
-            }
+            mOptions.Add(tOption);
         }
 
         /// <summary>
-        /// Removes a parameter with the specified key.
+        /// Removes a previously added parameter by key.
         /// </summary>
-        public void RemoveParameter(String key) { mParameters.Remove(key); }
+        public void RemoveParameter(String key)
+        {
+            mParameters.Remove(key);
+        }
 
         /// <summary>
-        /// Removes an option.
+        /// Removes a previously option.
         /// </summary>
-        public void RemoveOption(String option) { mOptions.Remove(option); }
+        public void RemoveOption(String option)
+        {
+            mOptions.Remove(option);
+        }
 
 
-        /// <summary>
-        /// Used to escape a string in order to send it to a Teamspeak 3 server.
-        /// </summary>
-        /// <exception cref="System.ArgumentNullException"/>
+
+        // Helpers for nomalizing strings.
         public static String EscapeString(String text)
         {
             if (text == null) {
@@ -129,11 +133,6 @@ namespace VoipManager.Teamspeak3.Communication
                        .Replace("\t", @"\t")
                        .Replace("\v", @"\v");
         }
-
-        /// <summary>
-        /// Used to unescape the response string from a Teamspeak 3 server.
-        /// </summary>
-        /// <exception cref="System.ArgumentNullException"/>
         public static String UnescapeString(String text)
         {
             if (text == null) {
@@ -152,7 +151,6 @@ namespace VoipManager.Teamspeak3.Communication
                        .Replace(@"\t", "\t")
                        .Replace(@"\v", "\v");
         }
-
 
         // Instance Information.
         public static Teamspeak3Request BuildVersion()

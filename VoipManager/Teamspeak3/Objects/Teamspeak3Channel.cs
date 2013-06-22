@@ -17,10 +17,11 @@
  * ************************************************************************** */
 
 using System;
-using VoipManager.Teamspeak3.Communication;
 
 namespace VoipManager.Teamspeak3.Objects
 {
+    using VoipManager.Teamspeak3.Communication;
+
     public class Teamspeak3Channel
     {
         #region Channel Data Keys
@@ -60,6 +61,7 @@ namespace VoipManager.Teamspeak3.Objects
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                            Raw Classes                            *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         public class RawBasicInfo
         {
             public String Name;
@@ -79,6 +81,7 @@ namespace VoipManager.Teamspeak3.Objects
                 if ((sValue = info[KEY_ID])   != null && Int32.TryParse(sValue, out iValue)) Id   = iValue;
             }
         }
+
         public class RawNormalInfo
         {
             public Int32? Pid;
@@ -104,6 +107,7 @@ namespace VoipManager.Teamspeak3.Objects
                 if ((sValue = info[KEY_POWER_NEEDED_SUBSCRIBE]) != null && Int32.TryParse(sValue, out iValue)) PowerNeededToSub = iValue;
             }
         }
+
         public class RawAdvancedInfo
         {
             public String   Topic;
@@ -150,7 +154,7 @@ namespace VoipManager.Teamspeak3.Objects
                     IsPermanent                  = null;
                     IsSemiPermanent              = null;
                     IsDefault                    = null;
-                    IsPassworded                   = null;
+                    IsPassworded                 = null;
                     AreMaxClientsUnlimited       = null;
                     AreMaxFamilyClientsUnlimited = null;
                     AreMaxFamilyClientsInherited = null;
@@ -184,108 +188,57 @@ namespace VoipManager.Teamspeak3.Objects
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                          Parsed Classes                           *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-        public class BasicInfo
+
+        public class BasicInfo : RawBasicInfo
         {
-            public RawBasicInfo Raw { get; private set; }
-
-            public String Name { get { return Raw.Name; } set { Raw.Name = value; } }
-            public Int32? Id   { get { return Raw.Id;   } set { Raw.Id   = value; } }
-
-            public BasicInfo() { Raw = new RawBasicInfo(); }
-            
-
-            public void SetData(Teamspeak3Group info, Boolean reset)
-            {
-                Raw.SetData(info, reset);
-            }
         }
-        public class NormalInfo
+        public class NormalInfo : RawNormalInfo
         {
-            public RawNormalInfo Raw { get; private set; }
-
-            public Int32? Pid              { get { return Raw.Pid;              } set { Raw.Pid              = value; } }
-            public Int32? Order            { get { return Raw.Order;            } set { Raw.Order            = value; } }
-            public Int32? TotalClients     { get { return Raw.TotalClients;     } set { Raw.TotalClients     = value; } }
-            public Int32? PowerNeededToSub { get { return Raw.PowerNeededToSub; } set { Raw.PowerNeededToSub = value; } }
-
-            public NormalInfo() { Raw = new RawNormalInfo(); }
-            
-
-            public void SetData(Teamspeak3Group info, Boolean reset)
-            {
-                Raw.SetData(info, reset);
-            }
         }
-        public class AdvancedInfo
+        public class AdvancedInfo : RawAdvancedInfo
         {
-            public RawAdvancedInfo Raw { get; private set; }
-
-            public String   Topic                        { get { return Raw.Topic;                        } set { Raw.Topic                        = value; } }
-            public String   Description                  { get { return Raw.Description;                  } set { Raw.Description                  = value; } }
-            public String   Password                     { get { return Raw.Password;                     } set { Raw.Password                     = value; } }
-            public String   FilePath                     { get { return Raw.FilePath;                     } set { Raw.FilePath                     = value; } }
-            public String   PhoneticName                 { get { return Raw.PhoneticName;                 } set { Raw.PhoneticName                 = value; } }
-            public Int32?   CodecQuality                 { get { return Raw.CodecQuality;                 } set { Raw.CodecQuality                 = value; } }
-            public Int32?   CodecLatencyFactor           { get { return Raw.CodecLatencyFactor;           } set { Raw.CodecLatencyFactor           = value; } }
-            public Int32?   MaxClients                   { get { return Raw.MaxClients;                   } set { Raw.MaxClients                   = value; } }
-            public Int32?   MaxFamilyClients             { get { return Raw.MaxFamilyClients;             } set { Raw.MaxFamilyClients             = value; } }
-            public Int32?   NeededTalkPower              { get { return Raw.NeededTalkPower;              } set { Raw.NeededTalkPower              = value; } }
-            public Int32?   IconId                       { get { return Raw.IconId;                       } set { Raw.IconId                       = value; } }
-            public Boolean? IsCodecUnencrypted           { get { return Raw.IsCodecUnencrypted;           } set { Raw.IsCodecUnencrypted           = value; } }
-            public Boolean? IsPermanent                  { get { return Raw.IsPermanent;                  } set { Raw.IsPermanent                  = value; } }
-            public Boolean? IsSemiPermanent              { get { return Raw.IsSemiPermanent;              } set { Raw.IsSemiPermanent              = value; } }
-            public Boolean? IsDefault                    { get { return Raw.IsDefault;                    } set { Raw.IsDefault                    = value; } }
-            public Boolean? IsPassworded                 { get { return Raw.IsPassworded;                 } set { Raw.IsPassworded                 = value; } }
-            public Boolean? AreMaxClientsUnlimited       { get { return Raw.AreMaxClientsUnlimited;       } set { Raw.AreMaxClientsUnlimited       = value; } }
-            public Boolean? AreMaxFamilyClientsUnlimited { get { return Raw.AreMaxFamilyClientsUnlimited; } set { Raw.AreMaxFamilyClientsUnlimited = value; } }
-            public Boolean? AreMaxFamilyClientsInherited { get { return Raw.AreMaxFamilyClientsInherited; } set { Raw.AreMaxFamilyClientsInherited = value; } }
-            public Boolean? ForcedSilence                { get { return Raw.ForcedSilence;                } set { Raw.ForcedSilence                = value; } }
-
-            public CodecType? Codec { 
-                get { return (CodecType?)Raw.Codec; }
-                set { Raw.Codec = (Int32?)value; }
-            }
-
-            public AdvancedInfo() { Raw = new RawAdvancedInfo(); }
-            
-
-            public void SetData(Teamspeak3Group info, Boolean reset)
-            {
-                Raw.SetData(info, reset);
+            new public CodecType? Codec { 
+                get { return (CodecType?)base.Codec; }
+                set { base.Codec = (Int32?)value; }
             }
         }
 
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         *                        Teamspeak 3 Channel                        *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
         /// <summary>Info from a "channelfind" command.</summary>
         public BasicInfo Basic { get; private set; }
+
         /// <summary>Info from a "channellist" command.</summary>
         public NormalInfo Normal { get; private set; }
+
         /// <summary>Info from a "channelinfo" command.</summary>
         public AdvancedInfo Advanced { get; private set; }
 
-        /// <summary>Initializes a channel with default values.</summary>
-        public Teamspeak3Channel()
+
+        /// <summary>
+        /// Initializes a channel with the specified data.
+        /// </summary>
+        public Teamspeak3Channel(Teamspeak3Group info = null)
         {
             Basic    = new BasicInfo();
             Normal   = new NormalInfo();
             Advanced = new AdvancedInfo();
-        }
-
-        /// <summary>Initializes a channel with the specified data.</summary>
-        public Teamspeak3Channel(Teamspeak3Group info) : this()
-        {
-            Basic.SetData(info, true);
-            Normal.SetData(info, true);
-            Advanced.SetData(info, true);
+            Update(info);
         }
 
 
-        /// <summary>Updates a client with the specified data.</summary>
-        public void Update(Teamspeak3Group info)
+        /// <summary>
+        /// Updates a client with the specified data.
+        /// </summary>
+        public void Update(Teamspeak3Group info, Boolean clear = false)
         {
-            Basic.SetData(info, false);
-            Normal.SetData(info, false);
-            Advanced.SetData(info, false);
+            if (info != null) {
+                Basic.SetData(info, clear);
+                Normal.SetData(info, clear);
+                Advanced.SetData(info, clear);
+            }
         }
     }
 }

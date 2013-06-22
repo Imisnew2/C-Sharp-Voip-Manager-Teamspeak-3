@@ -17,11 +17,13 @@
  * ************************************************************************** */
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using VoipManager.Teamspeak3.Communication;
 
 namespace VoipManager
 {
+    using VoipManager.Teamspeak3.Communication;
+
     internal static class Utilities
     {
         static Utilities()
@@ -44,7 +46,7 @@ namespace VoipManager
             Trace.WriteLine("Teamspeak3Request: {");
             ModifyLogIndent(4);
             Trace.WriteLine(String.Format("Command: {0}", request.Command));
-            Trace.WriteLine(String.Format("Raw: {0}", request.Raw.TrimEnd()));
+            Trace.WriteLine(String.Format("Raw: {0}", request.RawText.TrimEnd()));
             ModifyLogIndent(-4);
             Trace.WriteLine("}");
         }
@@ -53,8 +55,8 @@ namespace VoipManager
         {
             Trace.WriteLine("Teamspeak3Message: {");
             ModifyLogIndent(4);
-            foreach (Teamspeak3Pair tPair in message.Error.Pairs) {
-                Trace.WriteLine(String.Format("{0}: {1}", tPair.Key, tPair.Value));
+            foreach (String tKey in message.Error.Keys) {
+                Trace.WriteLine(String.Format("{0}: {1}", tKey, message.Error[tKey]));
             }
             foreach (Teamspeak3Section tSection in message.Sections) {
                 Trace.WriteLine("Teamspeak3Section: {");
@@ -62,8 +64,8 @@ namespace VoipManager
                 foreach (Teamspeak3Group tGroup in tSection.Groups) {
                     Trace.WriteLine("Teamspeak3Group: {");
                     ModifyLogIndent(4);
-                    foreach (Teamspeak3Pair tPair in tGroup.Pairs) {
-                        Trace.WriteLine(String.Format("{0}: {1}", tPair.Key, tPair.Value));
+                    foreach (String tKey in tGroup.Keys) {
+                        Trace.WriteLine(String.Format("{0}: {1}", tKey, tGroup[tKey]));
                     }
                     ModifyLogIndent(-4);
                     Trace.WriteLine("}");
@@ -91,6 +93,34 @@ namespace VoipManager
                 return utcEpoch.AddSeconds(utcInteger.Value);
             }
             return null;
+        }
+
+        public static bool AddOrUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
+        {
+            if (dictionary.ContainsKey(key)) {
+                dictionary[key] = value;
+                return false;
+            }
+            dictionary.Add(key, value);
+            return true;
+        }
+        public static TValue Get<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue fallback = default(TValue))
+        {
+            if (dictionary.ContainsKey(key)) {
+                return dictionary[key];
+            }
+            return fallback;
+        }
+
+        public static void Require<TException>(Boolean predicate, String message = null)
+            where TException : Exception
+        {
+            if (!predicate) {
+                if (message != null) {
+                    throw (TException)Activator.CreateInstance(typeof(TException), message);
+                }
+                throw (TException)Activator.CreateInstance(typeof(TException));
+            }
         }
     }
 }

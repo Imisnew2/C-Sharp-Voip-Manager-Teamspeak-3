@@ -26,21 +26,21 @@ namespace VoipManager.Teamspeak3.Communication
 {
     public sealed class Teamspeak3Message : Teamspeak3Response
     {
-        // Constants
-        public static readonly String Seperator      = "\n\r";
-        public static readonly String SeperatorRegex = "\x0A\x0D";
-
-        /// <example>version=3.0.6.1 build=1340956745 platform=Windows\n\rerror id=0 msg=ok\n\r</example>
+        // Examples: version=3.0.6.1 build=1340956745 platform=Windows\n\rerror id=0 msg=ok\n\r
         internal static readonly Regex MessageRegex = new Regex(String.Format("^((.+?{0})*?)error id=.+?{0}", SeperatorRegex));
-        /// <example>version=3.0.6.1 build=1340956745 platform=Windows\n\rerror id=0 msg=ok\n\r</example>
-        internal static readonly Regex BannedRegex = new Regex(String.Format("^((.+?{0})*?)error id=(3331|3329).+", SeperatorRegex));
+        internal static readonly Regex BannedRegex  = new Regex(String.Format("^((.+?{0})*?)error id=(3331|3329).+", SeperatorRegex));
 
-        // Sections
+        public const String Seperator = "\n\r";
+        public const String SeperatorRegex = "\\n\\r";
+
         private readonly List<Teamspeak3Section>     mSections = new List<Teamspeak3Section>(); 
         public Teamspeak3Section                     Section  { get { return mSections.FirstOrDefault(); } }
         public ReadOnlyCollection<Teamspeak3Section> Sections { get { return mSections.AsReadOnly(); } }  
 
-        // Error Information
+
+        /// <summary>
+        /// The status of the response and related information.
+        /// </summary>
         public readonly Teamspeak3Group Error;
         public UInt32 Id           { get { return UInt32.Parse(Error["id"]); } }
         public String Message      { get { return Error["msg"]; } }
@@ -52,11 +52,13 @@ namespace VoipManager.Teamspeak3.Communication
         /// </summary>
         /// <param name="raw">The raw response from the server.</param>
         /// <exception cref="System.ArgumentNullException"/>
-        public Teamspeak3Message(String raw) : base(raw)
+        public Teamspeak3Message(String rawText) : base(rawText)
         {
-            foreach (var strSection in raw.Split(Seperator.ToArray(), StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim())) {
-                if (strSection.StartsWith("error")) {
-                    Error = new Teamspeak3Group(strSection.Remove(0, "error".Length));
+            foreach (var strSection in rawText.Split(Seperator.ToArray(), StringSplitOptions.RemoveEmptyEntries)) {
+
+                String strSectionTrimmed = strSection.Trim();
+                if (strSectionTrimmed.StartsWith("error")) {
+                    Error = new Teamspeak3Group(strSectionTrimmed.Remove(0, "error".Length));
                     continue;
                 }
                 mSections.Add(new Teamspeak3Section(strSection));
@@ -66,23 +68,21 @@ namespace VoipManager.Teamspeak3.Communication
 
     public sealed class Teamspeak3Section
     {
-        // Constants
-        public static readonly String Seperator      = "|";
-        public static readonly String SeperatorRegex = "\x7C";
+        public const String Seperator      = "|";
+        public const String SeperatorRegex = "\\|";
 
-        // Groups
         private readonly List<Teamspeak3Group>     mGroups = new List<Teamspeak3Group>();
         public Teamspeak3Group                     Group  { get { return mGroups.FirstOrDefault(); } }
         public ReadOnlyCollection<Teamspeak3Group> Groups { get { return mGroups.AsReadOnly(); } }
 
 
         /// <summary>
-        /// Represents a collection of objects in the response.
+        /// Represents a collection of objects in a response.
         /// </summary>
         /// <param name="raw">This section's raw response from the server.</param>
-        public Teamspeak3Section(String raw)
+        public Teamspeak3Section(String rawText)
         {
-            foreach (var strGroup in raw.Split(Seperator.ToArray(), StringSplitOptions.RemoveEmptyEntries)) {
+            foreach (var strGroup in rawText.Split(Seperator.ToArray(), StringSplitOptions.RemoveEmptyEntries)) {
                 mGroups.Add(new Teamspeak3Group(strGroup));
             }
         }
@@ -90,58 +90,45 @@ namespace VoipManager.Teamspeak3.Communication
 
     public sealed class Teamspeak3Group
     {
-        // Constants
         public static readonly String Seperator      = " ";
-        public static readonly String SeperatorRegex = "\x20";
+        public static readonly String SeperatorRegex = " ";
 
-        // Pairs
-        private readonly List<Teamspeak3Pair>     mPairs = new List<Teamspeak3Pair>();
-        public Teamspeak3Pair                     Pair  { get { return mPairs.FirstOrDefault(); } }
-        public ReadOnlyCollection<Teamspeak3Pair> Pairs { get { return mPairs.AsReadOnly(); } }
+        private readonly Dictionary<String, String> mPairs = new Dictionary<String, String>();
+        public String this[String key]    { get { return mPairs.Get(key); } }
+        public IEnumerable<String> Keys   { get { return mPairs.Keys;     } }
+        public IEnumerable<String> Values { get { return mPairs.Values;   } }
 
-        // Indexer
-        public String this[String key] {
-            get {
-                var pair = mPairs.LastOrDefault(x => x.Key == key);
-                return pair != null
-                    ? pair.Value
-                    : null;
-        } }
 
         /// <summary>
-        /// Represents a single object in the response.
+        /// Represents a single object of a response.
         /// </summary>
         /// <param name="raw">This group's raw response from the server.</param>
-        public Teamspeak3Group(String raw)
+        public Teamspeak3Group(String rawText)
         {
-            foreach (var strPair in raw.Split(Seperator.ToArray(), StringSplitOptions.RemoveEmptyEntries)) {
-                mPairs.Add(new Teamspeak3Pair(strPair));
+            foreach (var strPair in rawText.Split(Seperator.ToArray(), StringSplitOptions.RemoveEmptyEntries)) {
+                Teamspeak3Pair pair = new Teamspeak3Pair(strPair);
+                mPairs.AddOrUpdate(pair.Key, pair.Value);
             }
         }
     }
 
     public sealed class Teamspeak3Pair
     {
-        // Constants
         public static readonly String Seperator      = "=";
-        public static readonly String SeperatorRegex = "\x3D";
+        public static readonly String SeperatorRegex = "=";
 
-        // Key / Value
         public readonly String Key;
         public readonly String Value;
 
-
         /// <summary>
-        /// Represents a single variable in the response.
+        /// Represents a single property of an object.
         /// </summary>
-        /// <param name="raw">This variable's raw response from the server.</param>
-        public Teamspeak3Pair(String raw)
+        /// <param name="raw">This pair's raw response from the server.</param>
+        public Teamspeak3Pair(String rawText)
         {
-            var pair = raw.Split(Seperator.ToArray());
-            Key = pair[0];
-            if (pair.Length > 1) {
-                Value = pair[1];
-            }
+            String[] pair = rawText.Split(Seperator.ToArray(), StringSplitOptions.RemoveEmptyEntries);
+            Key   = pair[0];
+            Value = pair.Length > 1 ? pair[1] : String.Empty;
         }
     }
 }

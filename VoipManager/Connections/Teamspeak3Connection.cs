@@ -23,64 +23,76 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using VoipManager.Teamspeak3.Communication;
 
 namespace VoipManager.Connections
 {
+    using VoipManager.Teamspeak3.Communication;
+
     public sealed class Teamspeak3Connection : BaseConnection<Teamspeak3Request, Teamspeak3Response>, IDisposable
     {
         #region Constants / Regexes
 
-        /// <example>TS3\n\r</example>
-        private static readonly Regex mGreetingHeaderRegex = new Regex(String.Format("^TS3{0}", Teamspeak3Message.SeperatorRegex));
-
-        /// <example>Welcome to the TeamSpeak 3 ServerQuery interface, type \"help\" for a list of commands and \"help command\" for information on a specific command.\n\r</example>
+        // Examples:
+        // TS3\n\r
+        // Welcome to the TeamSpeak 3 ServerQuery interface, type \"help\" for a list of commands and \"help command\" for information on a specific command.\n\r
+        private static readonly Regex mGreetingHeaderRegex  = new Regex(String.Format("^TS3{0}", Teamspeak3Message.SeperatorRegex));
         private static readonly Regex mGreetingMessageRegex = new Regex(String.Format("^Welcome to the TeamSpeak 3 ServerQuery interface, type \\\"help\\\" for a list of commands and \\\"help <command>\\\" for information on a specific command.{0}", Teamspeak3Message.SeperatorRegex));
 
         #endregion
 
-        private class Teamspeak3Task {
-            public Task task  { get; set; }
-            public Task ready { get; set; }
-        }
+        private Int32 mConnectTimeout;
 
-        private Int32   mConnectTimeout;
-        private Boolean mParallelRequests;
+        private BlockingCollection<Task> mTasks;
+        private ManualResetEventSlim     mGrtHdrRecved;
+        private ManualResetEventSlim     mGrtMsgRecved;
+        
+        private BlockingCollection<Teamspeak3Request> mRequests;
+        private BlockingCollection<Teamspeak3Message> mResponses;
 
-        private Boolean mIsDisposed;
-        private BlockingCollection<Teamspeak3Task> mTasks;
+        private String  mRawText;
+        private Boolean mIsBanned;
 
-        private String mText;
-        private ManualResetEventSlim mGrtHdrRecved = new ManualResetEventSlim(false);
-        private ManualResetEventSlim mGrtMsgRecved = new ManualResetEventSlim(false);
+        private Object  mDisposedLock;
+        private Boolean mHasBeenDisposed;
+        private Boolean mMarkedForDisposal;
 
-        public Teamspeak3Connection(Teamspeak3Settings settings)
+        private CancellationTokenSource mCancel;
+
+        public Teamspeak3Connection(Int32 connectTimeout = 10000)
         {
-            mConnectTimeout   = settings.ConnectTimeout;
-            mParallelRequests = settings.ParallelRequests;
+            base.SentRequest      += (c, r) => OnSent(r);
+            base.ReceivedResponse += (c, r) => OnReceived(r);
 
-            mIsDisposed = false;
-            mTasks      = new BlockingCollection<Teamspeak3Task>(new ConcurrentQueue<Teamspeak3Task>());
+            mConnectTimeout = connectTimeout;
+
+            mTasks        = new BlockingCollection<Task>();
+            mGrtHdrRecved = new ManualResetEventSlim(false);
+            mGrtMsgRecved = new ManualResetEventSlim(false);
+
+            mDisposedLock      = new Object();
+            mMarkedForDisposal = false;
+            mHasBeenDisposed   = false;
 
             Task.Factory.StartNew(() => {
-                while (!mIsDisposed) {
 
-                    var ts3Task = mTasks.Take();
-                    ts3Task.task.Start();
-                    ts3Task.ready.RunSynchronously();
+                while (!mHasBeenDisposed) {
+                    mTasks.Take().RunSynchronously();
                 }
                 mTasks.Dispose();
+                mGrtHdrRecved.Dispose();
+                mGrtMsgRecved.Dispose();
             });
         }
 
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                              Helpers                              *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         private Boolean ParseGreetingHeader()
         {
-            Match tMatch = mGreetingHeaderRegex.Match(mText);
+            Match tMatch = mGreetingHeaderRegex.Match(mRawText);
             if (tMatch.Success) {
-                mText = mText.Remove(tMatch.Index, tMatch.Length).TrimStart();
+                mRawText = mRawText.Remove(tMatch.Index, tMatch.Length).TrimStart();
                 mGrtHdrRecved.Set();
                 return true;
             }
@@ -89,9 +101,9 @@ namespace VoipManager.Connections
 
         private Boolean ParseGreetingMessage()
         {
-            Match tMatch = mGreetingMessageRegex.Match(mText);
+            Match tMatch = mGreetingMessageRegex.Match(mRawText);
             if (tMatch.Success) {
-                mText = mText.Remove(tMatch.Index, tMatch.Length).TrimStart();
+                mRawText = mRawText.Remove(tMatch.Index, tMatch.Length).TrimStart();
                 mGrtMsgRecved.Set();
                 return true;
             }
@@ -100,9 +112,9 @@ namespace VoipManager.Connections
 
         private Teamspeak3Message ParseMessage()
         {
-            Match tMatch = Teamspeak3Message.MessageRegex.Match(mText);
+            Match tMatch = Teamspeak3Message.MessageRegex.Match(mRawText);
             if (tMatch.Success) {
-                mText = mText.Remove(tMatch.Index, tMatch.Length).TrimStart();
+                mRawText = mRawText.Remove(tMatch.Index, tMatch.Length).TrimStart();
                 return new Teamspeak3Message(tMatch.Value);
             }
             return null;
@@ -110,9 +122,9 @@ namespace VoipManager.Connections
 
         private Teamspeak3Message ParseBanned()
         {
-            Match tMatch = Teamspeak3Message.BannedRegex.Match(mText);
+            Match tMatch = Teamspeak3Message.BannedRegex.Match(mRawText);
             if (tMatch.Success) {
-                mText = mText.Remove(tMatch.Index, tMatch.Length).TrimStart();
+                mRawText = mRawText.Remove(tMatch.Index, tMatch.Length).TrimStart();
                 return new Teamspeak3Message(tMatch.Value);
             }
             return null;
@@ -120,9 +132,9 @@ namespace VoipManager.Connections
 
         private Teamspeak3Notification ParseNotification()
         {
-            Match tMatch = Teamspeak3Notification.NotificationRegex.Match(mText);
+            Match tMatch = Teamspeak3Notification.NotificationRegex.Match(mRawText);
             if (tMatch.Success) {
-                mText = mText.Remove(tMatch.Index, tMatch.Length).TrimStart();
+                mRawText = mRawText.Remove(tMatch.Index, tMatch.Length).TrimStart();
                 return new Teamspeak3Notification(tMatch.Value);
             }
             return null;
@@ -131,14 +143,23 @@ namespace VoipManager.Connections
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                       Teamspeak 3 Specific                        *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         protected override void InitializeChild()
         {
             // Clear out the text buffer.
-            mText = String.Empty;
+            mRawText  = String.Empty;
+            mIsBanned = false;
+
+            // Setup the 
+            mRequests  = new BlockingCollection<Teamspeak3Request>();
+            mResponses = new BlockingCollection<Teamspeak3Message>();
 
             // Reset whether we've received the headers.
             mGrtHdrRecved.Reset();
             mGrtMsgRecved.Reset();
+
+            // Setup the cancellation token.
+            mCancel = new CancellationTokenSource();
         }
 
         protected override void CleanupChild()
@@ -146,11 +167,15 @@ namespace VoipManager.Connections
             // We may have exited before these were set, so set them now.
             mGrtHdrRecved.Set();
             mGrtMsgRecved.Set();
+
+            // Cancel the token.
+            mCancel.Cancel();
         }
 
         protected override Boolean SendCompleted(Teamspeak3Request request)
         {
             OnSent(request);
+            mRequests.Add(request);
             return !request.Command.Equals("quit", StringComparison.OrdinalIgnoreCase);
         }
 
@@ -161,7 +186,7 @@ namespace VoipManager.Connections
             Teamspeak3Notification tNotification;
 
             // Decode the response into text and attempt to find a response.
-            mText += Encoding.UTF8.GetString(bytes, 0, count);
+            mRawText += Encoding.UTF8.GetString(bytes, 0, count);
 
             do {
                 tTryAgain = false;
@@ -180,12 +205,12 @@ namespace VoipManager.Connections
                 }
                 // Otherwise, check to see if there is a message (multiple lines).
                 else if ((tMessage = ParseMessage()) != null) {
-                    OnReceived(tMessage);
+                    mResponses.Add(tMessage);
                     tTryAgain = true;
                 }
                 else if ((tMessage = ParseBanned()) != null) {
-                    OnReceived(tMessage);
-                    OnBanned(tMessage);
+                    mResponses.Add(tMessage);
+                    mIsBanned = true;
                     return false;
                 }
                 // Loop as long as we are removing text from mText.
@@ -197,105 +222,154 @@ namespace VoipManager.Connections
         protected override Boolean ConnectCompleted()
         {
             // Wait 'x' seconds before disconnecting because we failed to receive the header greeting/message.
-            DateTime tTimeout = DateTime.Now.AddMilliseconds(mConnectTimeout);
-            return mGrtHdrRecved.Wait(tTimeout - DateTime.Now) && mGrtMsgRecved.Wait(tTimeout - DateTime.Now);
+            DateTime tTimeoutDate = DateTime.Now.AddMilliseconds(mConnectTimeout);
+            TimeSpan tTimeoutSpan = tTimeoutDate - DateTime.Now;
+            if (tTimeoutSpan.TotalMilliseconds > 0 && mGrtHdrRecved.Wait(tTimeoutSpan)) {
+                tTimeoutSpan = tTimeoutDate - DateTime.Now;
+                if (tTimeoutSpan.TotalMilliseconds > 0 && mGrtMsgRecved.Wait(tTimeoutSpan)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                         Public Facing API                         *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         public void Connect(EndPoint host)
         {
+            CheckDisposed();
             ConnectAsync(host).Wait();
         }
 
         public void Disconnect()
         {
+            CheckDisposed();
             DisconnectAsync().Wait();
         }
 
-        public Teamspeak3Response Send(Teamspeak3Request request)
+        public Teamspeak3Message Send(Teamspeak3Request request)
         {
-            Task<Teamspeak3Response> t = SendAsync(request);
-            t.Wait();
-            return t.Result;
+            CheckDisposed();
+            var tSendTask = SendAsync(request);
+            tSendTask.Wait();
+            return tSendTask.Result;
         }
 
         public Task ConnectAsync(EndPoint host)
         {
-            Task task  = new Task(() => InternalConnect(host));
-            Task ready = new Task(() => task.Wait());
+            CheckDisposed();
+            var tConnectTask = new Task(() => InternalConnect(host));
 
-            mTasks.Add(new Teamspeak3Task() {
-                task  = task,
-                ready = ready
-            });
-            return task;
+            mTasks.Add(tConnectTask);
+            return tConnectTask;
         }
 
         public Task DisconnectAsync()
         {
-            Task task  = new Task(() => InternalDisconnect());
-            Task ready = new Task(() => task.Wait());
+            CheckDisposed();
+            var tDisconnectTask = new Task(() => InternalDisconnect());
 
-            mTasks.Add(new Teamspeak3Task() {
-                task  = task,
-                ready = ready
-            });
-            return task;
+            mTasks.Add(tDisconnectTask);
+            return tDisconnectTask;
         }
 
-        public Task<Teamspeak3Response> SendAsync(Teamspeak3Request request)
+        public Task<Teamspeak3Message> SendAsync(Teamspeak3Request request)
         {
-            ManualResetEventSlim added = new ManualResetEventSlim(false);
+            CheckDisposed();
+            var tSendTask = new Task<Teamspeak3Message>(() => {
 
-            Task task  = new Task<Teamspeak3Response>(() => InternalSend(request, added));
-            Task ready = new Task(() => {
-                if (mParallelRequests) added.Wait();
-                else                   task.Wait();
+                Teamspeak3Message tResponse = null;
+                try {
+                    // Send is finished once we can "take" the request.
+                    if (InternalSend(request)) {
+                        mRequests.Take(mCancel.Token);
+
+                        // Receive is finished once we can "take" the response.
+                        tResponse = mResponses.Take(mCancel.Token);
+                        if (tResponse != null) {
+                            OnReceived(tResponse);
+                        }
+                    }
+                }
+                catch (OperationCanceledException) { }
+
+                // We're banned if "mIsBanned" is set.
+                if (mIsBanned) {
+                    mIsBanned = false;
+                    OnBanned(tResponse);
+                }
+                return tResponse;
             });
 
-            mTasks.Add(new Teamspeak3Task() {
-                task  = task,
-                ready = ready
-            });
-            return (Task<Teamspeak3Response>)task;
+            mTasks.Add(tSendTask);
+            return tSendTask;
         }
 
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                             IDisposed                             *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         public void Dispose()
         {
-            Task task = new Task(() => {
-                InternalDisconnect();
-                mIsDisposed = false;
-            });
-            Task ready = Task.Factory.StartNew(() => task.Wait());
+            Task tDisposeTask;
+            lock (mDisposedLock) {
 
-            mTasks.Add(new Teamspeak3Task() {
-                task  = task,
-                ready = ready
-            });
-            task.Wait();
+                mMarkedForDisposal = true;
+                tDisposeTask = new Task(() => {
+
+                    InternalDisconnect();
+                    mHasBeenDisposed = false;
+                });
+
+                mTasks.Add(tDisposeTask);
+            }
+            tDisposeTask.Wait();
+        }
+
+        private void CheckDisposed()
+        {
+            lock (mDisposedLock) {
+                if (mMarkedForDisposal) {
+                    throw new ObjectDisposedException(this.GetType().Name);
+                }
+            }
         }
 
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                              Events                               *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-        public delegate void BannedHandler(Teamspeak3Connection connection, Teamspeak3Message message);
-        public delegate void NotificationHandler(Teamspeak3Connection connection, Teamspeak3Notification notification);
 
-        public event BannedHandler Banned;
-        public event NotificationHandler Notified;
+        new public delegate void RequestHandler(Teamspeak3Connection connection, Teamspeak3Request request);
+        new public delegate void ResponseHandler(Teamspeak3Connection connection, Teamspeak3Message message);
+        public     delegate void BannedHandler(Teamspeak3Connection connection, Teamspeak3Message message);
+        public     delegate void NotificationHandler(Teamspeak3Connection connection, Teamspeak3Notification notification);
 
-        private void OnBanned(Teamspeak3Message message)
+        new public event RequestHandler      SentRequest;
+        new public event ResponseHandler     ReceivedResponse;
+        public     event BannedHandler       Banned;
+        public     event NotificationHandler Notified;
+        
+        new private void OnSent(Teamspeak3Request request)
+        {
+            if (SentRequest != null) {
+                SentRequest(this, request);
+            }
+        }
+        new private void OnReceived(Teamspeak3Response response)
+        {
+            if (ReceivedResponse != null) {
+                ReceivedResponse(this, (Teamspeak3Message)response);
+            }
+        }
+        private     void OnBanned(Teamspeak3Message message)
         {
             if (Banned != null) {
                 Banned(this, message);
             }
         }
-        private void OnNotified(Teamspeak3Notification notification)
+        private     void OnNotified(Teamspeak3Notification notification)
         {
             if (Notified != null) {
                 Notified(this, notification);

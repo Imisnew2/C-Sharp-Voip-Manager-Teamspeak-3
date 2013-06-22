@@ -22,7 +22,8 @@ namespace VoipManager.Communication
 {
     public interface IRequest
     {
-        String Command { get; }
         Byte[] Raw     { get; }
+        String RawText { get; }
+        String Command { get; }
     }
 }

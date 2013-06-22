@@ -22,10 +22,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using VoipManager.Communication;
 
 namespace VoipManager.Connections
 {
+    using VoipManager.Communication;
+
     public abstract class BaseConnection<TRequest, TResponse>
         where TRequest  : IRequest
         where TResponse : IResponse
@@ -45,13 +46,15 @@ namespace VoipManager.Connections
         private SocketAsyncEventArgs mSendSocketEventArgs = new SocketAsyncEventArgs();
         private SocketAsyncEventArgs mRecvSocketEventArgs = new SocketAsyncEventArgs();
 
-        private BlockingCollection<TRequest>  mWaiting;
-        private BlockingCollection<TResponse> mReceived;
-        private ReaderWriterLockSlim          mDisposeLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+        private ReaderWriterLockSlim mDisposeLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+
+        private BlockingCollection<TRequest> mWaiting;
+
 
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                               Send                                *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         private void SendTask()
         {
             Boolean tAsync;
@@ -118,10 +121,8 @@ namespace VoipManager.Connections
                     tAsync = mSocket.SendAsync(args);
                 }
                 // Exit if the child class says we should.
-                else {
-                    if (!SendCompleted((TRequest)args.UserToken)) {
-                        mCancel.Cancel();
-                    }
+                else if (!SendCompleted((TRequest)args.UserToken)) {
+                    mCancel.Cancel();
                 }
             }
 
@@ -136,6 +137,7 @@ namespace VoipManager.Connections
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                              Receive                              *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         private void RecvTask()
         {
             Boolean tAsync;
@@ -202,6 +204,7 @@ namespace VoipManager.Connections
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                              Manager                              *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         private void FinalTask()
         {
             // Wait for the send/recv tasks to finish.
@@ -217,20 +220,22 @@ namespace VoipManager.Connections
                 // Dispose of the resources correctly.
                 mCancel.Dispose();
                 mWaiting.Dispose();
-                mReceived.Dispose();
 
                 // Let the child classes cleanup resources as well.
                 CleanupChild();
-            } finally {
-                mDisposeLock.ExitWriteLock();
-            }
+            } finally { mDisposeLock.ExitWriteLock(); }
         }
+
 
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                    Connect / Disconnect / Send                    *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         protected void InternalConnect(EndPoint host)
         {
+            // The code up to "mFinal.Wait()" will ensure that:
+            // - Another connection will not be attempted while we have a live connection.
+            // - The connection will not be created until the previous connection is completely shutdown.
             try { mDisposeLock.EnterReadLock();
 
                 if (mSocket != null) {
@@ -254,9 +259,8 @@ namespace VoipManager.Connections
                 mSocket.Connect(host);
 
                 // Setup the resources.
-                mCancel   = new CancellationTokenSource();
-                mWaiting  = new BlockingCollection<TRequest>(new ConcurrentQueue<TRequest>());
-                mReceived = new BlockingCollection<TResponse>(new ConcurrentQueue<TResponse>());
+                mCancel  = new CancellationTokenSource();
+                mWaiting = new BlockingCollection<TRequest>(new ConcurrentQueue<TRequest>());
                 InitializeChild();
 
                 // Start the send, receive, and manager tasks.
@@ -280,50 +284,49 @@ namespace VoipManager.Connections
 
         protected void InternalDisconnect()
         {
+            // This will ensure that:
+            // - We will not attempt to disconnect if we've already disconnected.
+            // - We will not disconnect if the connection is being shutdown.
             try { mDisposeLock.EnterReadLock();
 
                 if (mSocket == null) {
                     return;
                 }
+                // This causes the receive thread to complete with a SocketError of
+                // something other than Success, which will cancel the token, which
+                // will cause the send thread to shutdown, finally allowing the end
+                // thread to run its course and dispose of resources.
                 mSocket.Shutdown(SocketShutdown.Both);
-
-                OnDisconnected();
-
-            } finally { mDisposeLock.ExitReadLock(); }
+            }
+            finally { mDisposeLock.ExitReadLock(); }
 
             // Wait for the connection to close before being done with the disconnect.
             mFinal.Wait();
+
+            OnDisconnected();
         }
 
-        protected TResponse InternalSend(TRequest request, ManualResetEventSlim added)
+        protected bool InternalSend(TRequest request)
         {
+            // This will ensure that:
+            // - We will not attempt to send information if we've disconnected.
+            // - We will not send information if the connection is being shutdown.
             try { mDisposeLock.EnterReadLock();
 
                 if (mSocket == null) {
-                    added.Set();
-                    return default(TResponse);
+                    return false;
                 }
-
-                // Let the outside know we've added the request to the queue.
                 mWaiting.Add(request);
-                added.Set();
-
-                TResponse tResponse = mReceived.Take(mCancel.Token);
-                if (tResponse.Request == null) {
-                    tResponse.Request = request;
-                }
-                return tResponse;
-
-            }
-            catch (OperationCanceledException) {
-                return default(TResponse);
             }
             finally { mDisposeLock.ExitReadLock(); }
+
+            return true;
         }
 
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                             Abstract                              *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         protected abstract void InitializeChild();
 
         protected abstract void CleanupChild();
@@ -337,6 +340,7 @@ namespace VoipManager.Connections
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *                              Events                               *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         protected void OnConnected()
         {
             if (Connected != null) {
@@ -357,12 +361,6 @@ namespace VoipManager.Connections
         }
         protected void OnReceived(TResponse response)
         {
-            // Wait until the request has been set before firing the event.
-            mReceived.Add(response);
-            while (response.Request == null) {
-                Thread.Yield();
-            }
-
             if (ReceivedResponse != null) {
                 ReceivedResponse(this, response);
             }
